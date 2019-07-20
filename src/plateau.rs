@@ -1,3 +1,9 @@
+use std::fmt;
+
+const PLAYER1: char = 'X';
+const PLAYER2: char = 'O';
+const EMPTY: char = '.';
+
 #[derive(Debug, Clone)]
 pub enum Cell {
     Player1,
@@ -38,5 +44,36 @@ impl Plateau {
         } else {
             self.cells[(self.width * y + x) as usize] = cell;
         }
+    }
+}
+
+impl fmt::Display for Cell {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let cell = match self {
+            Cell::Player1 => PLAYER1,
+            Cell::Player2 => PLAYER2,
+            Cell::Empty => EMPTY,
+        };
+        write!(f, "{}", cell)
+    }
+}
+
+impl fmt::Display for Plateau {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "Plateau {} {}:", self.height, self.width)?;
+        for y in 0..(self.width) {
+            write!(f, "{}", y % 10)?;
+        }
+        writeln!(f, "")?;
+
+        for y in 0..(self.height) {
+            write!(f, "{:03} ", y)?;
+            for x in 0..(self.width) {
+                let cell = self.get(x, y);
+                write!(f, "{}", cell)?;
+            }
+            writeln!(f, "")?;
+        }
+        write!(f, "")
     }
 }
