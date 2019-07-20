@@ -1,5 +1,5 @@
 [package]
-name = "Filler_Mk2"
+name = "filler_mk2"
 version = "0.1.0"
 authors = ["wseegers"]
 edition = "2018"
