@@ -2,7 +2,6 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 use std::process::{Command, Stdio};
-use std::io::prelude::*;
 use std::io::{BufRead, Write, BufReader};
 
 pub struct App {
@@ -20,7 +19,7 @@ impl App {
         let (p2_sender, p2_receiver_internal) = mpsc::channel();
         let (p2_sender_internal, p2_receiver) = mpsc::channel();
 
-        let p1_thread = thread::spawn(move || {
+        thread::spawn(move || {
             let mut child_process = Command::new(path1)
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
@@ -35,7 +34,7 @@ impl App {
                 .expect("Could not retrieve player1 stdout"));
 
             loop {
-                let mut receive: String = p1_receiver_internal
+                let receive: String = p1_receiver_internal
                     .recv()
                     .expect("Something went wrong when player1 received message");
                 child_in
@@ -51,7 +50,7 @@ impl App {
             }
         });
 
-        let p2_thread = thread::spawn(move || {
+        thread::spawn(move || {
             let mut child_process = Command::new(path2)
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
@@ -66,7 +65,7 @@ impl App {
                 .expect("Could not retrieve player2 stdout"));
 
             loop {
-                let mut receive: String = p2_receiver_internal
+                let receive: String = p2_receiver_internal
                     .recv()
                     .expect("Something went wrong when player2 received message");
                 child_in
