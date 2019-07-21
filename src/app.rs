@@ -4,115 +4,94 @@ use std::time::Duration;
 use std::process::{Command, Stdio};
 use std::io::{BufRead, Write, BufReader};
 
+use std::sync::mpsc::{Sender, Receiver};
+
 pub struct App {
-    player1_sender: std::sync::mpsc::Sender<std::string::String>,
-    player1_receiver: std::sync::mpsc::Receiver<std::string::String>,
-    player2_sender: std::sync::mpsc::Sender<std::string::String>,
-    player2_receiver: std::sync::mpsc::Receiver<std::string::String>,
+    player1_sender: Sender<std::string::String>,
+    player1_receiver: Receiver<std::string::String>,
+    player2_sender: Sender<std::string::String>,
+    player2_receiver: Receiver<std::string::String>,
     timeout: u64,
 }
 
 impl App {
     pub fn new(path1: String, path2: String, timeout: u64) -> App {
-        let (p1_sender, p1_receiver_internal) = mpsc::channel();
-        let (p1_sender_internal, p1_receiver) = mpsc::channel();
-        let (p2_sender, p2_receiver_internal) = mpsc::channel();
-        let (p2_sender_internal, p2_receiver) = mpsc::channel();
-
-        thread::spawn(move || {
-            let mut child_process = Command::new(path1)
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .spawn()
-                .expect("Could not initialize player1");
-
-            let child_in = child_process.stdin
-                .as_mut().
-                expect("Could not retrieve player1 stdin");
-            let mut child_out = BufReader::new(child_process.stdout
-                .as_mut()
-                .expect("Could not retrieve player1 stdout"));
-
-            loop {
-                let receive: String = p1_receiver_internal
-                    .recv()
-                    .expect("Something went wrong when player1 received message");
-                child_in
-                    .write(receive.as_bytes())
-                    .expect("Something went wrong writing to player1");
-                let mut line = String::new();
-                child_out
-                    .read_line(&mut line)
-                    .expect("Something went wrong reading line from player1");
-                p1_sender_internal
-                    .send(line)
-                    .expect("Something went wrong while sending message from player1");
-            }
-        });
-
-        thread::spawn(move || {
-            let mut child_process = Command::new(path2)
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .spawn()
-                .expect("Could not initialize player2");
-
-            let child_in = child_process.stdin
-                .as_mut()
-                .expect("Could not retrieve player2 stdin");
-            let mut child_out = BufReader::new(child_process.stdout
-                .as_mut()
-                .expect("Could not retrieve player2 stdout"));
-
-            loop {
-                let receive: String = p2_receiver_internal
-                    .recv()
-                    .expect("Something went wrong when player2 received message");
-                child_in
-                    .write(receive.as_bytes())
-                    .expect("Something went wrong writing to player2");
-                let mut line = String::new();
-                child_out
-                    .read_line(&mut line)
-                    .expect("Something went wrong reading line from player2");
-                p2_sender_internal
-                    .send(line)
-                    .expect("Something went wrong while sending message from player2");
-            }
-        });
+        let (p1_sender, p1_receiver) = App::spawn_child_process(path1);
+        let (p2_sender, p2_receiver) = App::spawn_child_process(path2);
 
         App {
             player1_sender: p1_sender,
             player1_receiver: p1_receiver,
             player2_sender: p2_sender,
             player2_receiver: p2_receiver,
-            timeout
+            timeout,
         }
     }
 
     pub fn p1_send(&self, message: String) {
         self.player1_sender
             .send(message)
-            .expect("Something went wrong sending message to player1");
+            .expect("Error while sending message to player1");
     }
 
     pub fn p2_send(&self, message: String) {
         self.player2_sender
             .send(message)
-            .expect("Something went wrong sending message to player2");
+            .expect("Error while sending message to player2");
     }
 
     pub fn p1_receive(&self) -> String {
         let s = self.player1_receiver
             .recv_timeout(Duration::from_secs(self.timeout))
-            .expect("Something went wrong while receiving player1 message");
+            .expect("Error while receiving player1 message");
         s
     }
 
     pub fn p2_receive(&self) -> String {
         let s = self.player2_receiver
             .recv_timeout(Duration::from_secs(self.timeout))
-            .expect("Something went wrong while receiving player 2 message");
+            .expect("Error while receiving player 2 message");
         s
+    }
+}
+
+/* Helper functions */
+impl App {
+    fn spawn_child_process(path: String) -> (Sender<std::string::String>, Receiver<std::string::String>) {
+        let (sender, receiver_internal) = mpsc::channel();
+        let (sender_internal, receiver) = mpsc::channel();
+
+        thread::spawn(move || {
+            let mut child_process = Command::new(&path)
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap_or_else(|_| panic!("Could not initialize player: {}", path));
+
+            let child_in = child_process.stdin
+                .as_mut()
+                .unwrap_or_else(|| panic!("Could not retrieve stdin for: {}", path));
+            let mut child_out = BufReader::new(child_process.stdout
+                .as_mut()
+                .unwrap_or_else(|| panic!("Could not retrieve stdout for: {}", path)));
+
+            loop {
+                let receive: String = receiver_internal
+                    .recv()
+                    .unwrap_or_else(|_| panic!("Error receiving message from: {}", path));
+                child_in
+                    .write(receive.as_bytes())
+                    .unwrap_or_else(|_| panic!("Error writing to: {}", path));
+                let mut line = String::new();
+                child_out
+                    .read_line(&mut line)
+                    .unwrap_or_else(|_| panic!("Error while reading line from: {}", path));
+                sender_internal
+                    .send(line)
+                    .unwrap_or_else(|_| panic!("Error while sending message from: {}", path));
+            }
+        });
+
+        (sender, receiver)
     }
 }
