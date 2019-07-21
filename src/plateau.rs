@@ -74,6 +74,6 @@ impl fmt::Display for Plateau {
             }
             writeln!(f, "")?;
         }
-        write!(f, "")
+        Ok(())
     }
 }
