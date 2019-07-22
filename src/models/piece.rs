@@ -1,3 +1,7 @@
+use crate::models::point;
+
+use point::Point;
+
 use rand::prelude::*;
 use std::fmt;
 
@@ -5,13 +9,20 @@ const EMPTY: char = '.';
 const OCCUPIED: char = '*';
 
 pub struct Piece {
-	width: u32,
-	height: u32,
-	cells: Vec<bool>,
+	pub width: u32,
+	pub height: u32,
+	pub cells: Vec<bool>,
 	density: u32,
 }
 
 impl Piece {
+	pub fn get(&self, p: Point) -> bool {
+		match self.cells.get((self.width * p.y + p.x) as usize) {
+			Some(c) => *c,
+			None => panic!("Cells incorrectly initialized"),
+		}
+	}
+
 	fn mutate_1(&mut self, x: u32, y: u32) {
 		let mut rng = thread_rng();
 
@@ -93,7 +104,6 @@ impl PieceBag {
 		p.cells[(y * p.width + x) as usize] = true;
 		p.mutate_1(x, y);
 
-		println!("{}, {}", x, y);
 		p
 	}
 }
