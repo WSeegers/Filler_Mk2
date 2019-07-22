@@ -1,10 +1,9 @@
 use std::sync::mpsc;
+use std::sync::mpsc::{Sender, Receiver, RecvTimeoutError};
 use std::thread;
 use std::time::Duration;
 use std::process::{Command, Stdio};
 use std::io::{BufRead, Write, BufReader};
-
-use std::sync::mpsc::{Sender, Receiver};
 
 pub struct App {
     player1_sender: Sender<std::string::String>,
@@ -40,18 +39,16 @@ impl App {
             .expect("Error while sending message to player2");
     }
 
-    pub fn p1_receive(&self) -> String {
+    pub fn p1_receive(&self) -> Result<String, RecvTimeoutError> {
         let s = self.player1_receiver
-            .recv_timeout(Duration::from_secs(self.timeout))
-            .expect("Error while receiving player1 message");
-        s
+            .recv_timeout(Duration::from_secs(self.timeout))?;
+        Ok(s)
     }
 
-    pub fn p2_receive(&self) -> String {
+    pub fn p2_receive(&self) -> Result<String, RecvTimeoutError> {
         let s = self.player2_receiver
-            .recv_timeout(Duration::from_secs(self.timeout))
-            .expect("Error while receiving player 2 message");
-        s
+            .recv_timeout(Duration::from_secs(self.timeout))?;
+        Ok(s)
     }
 }
 
