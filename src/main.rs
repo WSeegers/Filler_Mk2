@@ -1,28 +1,35 @@
-mod plateau;
-mod app;
+mod models;
+use models::*;
 
-use plateau::{Cell, Plateau};
-use app::App;
+use piece::PieceBag;
+use plateau::{Plateau, Player};
+use point::Point;
 
 fn main() {
-    // let mut p = Plateau::new(30, 14);
+	let player1_start = Point { x: 2, y: 2 };
+	let player2_start = Point { x: 15, y: 15 };
 
-    // p.set(0, 0, Cell::Player1);
-    // p.set(0, 1, Cell::Player2);
-    // p.set(5, 5, Cell::Player2);
+	let mut p = match Plateau::new(30, 30, &player1_start, &player2_start) {
+		Ok(plat) => plat,
+		Err(msg) => panic!(msg),
+	};
 
-    // println!("{}", p);
+	let pb = PieceBag::new([10, 11], [10, 11]);
 
-    let app = App::new(String::from("./a.out"), String::from("./a.out"), 2);
-    app.p1_send(String::from("Hey\n"));
-    let s: Option<String> = match app.p1_receive() {
-        Ok(s) => {
-            print!("{}", s);
-            Some(s)
-        },
-        Err(_) => {
-            println!("Player took too long to respond");
-            None
-        },
-    };
+	let piece_1 = pb.next();
+	let piece_2 = pb.next();
+
+	match p.place_piece(&piece_1, &Point { x: 0, y: 0 }, Player::Player1) {
+		Err(msg) => println!("Player1: {}", msg),
+		Ok(_) => (),
+	}
+
+	match p.place_piece(&piece_2, &Point { x: 10, y: 10 }, Player::Player2) {
+		Err(msg) => println!("Player2: {}", msg),
+		Ok(_) => (),
+	}
+
+	print!("{}", p);
+	print!("{}", piece_1);
+	print!("{}", piece_2);
 }
