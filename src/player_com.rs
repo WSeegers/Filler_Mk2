@@ -5,7 +5,7 @@ use std::time::Duration;
 use std::process::{Command, Stdio};
 use std::io::{BufRead, Write, BufReader};
 
-pub struct App {
+pub struct PlayerCom {
     player1_sender: Sender<std::string::String>,
     player1_receiver: Receiver<std::string::String>,
     player2_sender: Sender<std::string::String>,
@@ -13,12 +13,12 @@ pub struct App {
     timeout: u64,
 }
 
-impl App {
-    pub fn new(path1: String, path2: String, timeout: u64) -> App {
-        let (p1_sender, p1_receiver) = App::spawn_child_process(path1);
-        let (p2_sender, p2_receiver) = App::spawn_child_process(path2);
+impl PlayerCom {
+    pub fn new(path1: String, path2: String, timeout: u64) -> PlayerCom {
+        let (p1_sender, p1_receiver) = PlayerCom::spawn_child_process(path1);
+        let (p2_sender, p2_receiver) = PlayerCom::spawn_child_process(path2);
 
-        App {
+        PlayerCom {
             player1_sender: p1_sender,
             player1_receiver: p1_receiver,
             player2_sender: p2_sender,
@@ -53,7 +53,7 @@ impl App {
 }
 
 /* Helper functions */
-impl App {
+impl PlayerCom {
     fn spawn_child_process(path: String) -> (Sender<std::string::String>, Receiver<std::string::String>) {
         let (sender, receiver_internal) = mpsc::channel();
         let (sender_internal, receiver) = mpsc::channel();
