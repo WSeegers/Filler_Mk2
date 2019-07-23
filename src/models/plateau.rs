@@ -4,7 +4,7 @@ use piece::Piece;
 use point::Point;
 use std::fmt;
 
-const PLAYER1: char = '0';
+const PLAYER1: char = 'O';
 const PLAYER2: char = 'X';
 const EMPTY: char = '.';
 
