@@ -5,31 +5,32 @@ use piece::PieceBag;
 use plateau::{Plateau, Player};
 use point::Point;
 
+mod player_com;
+use player_com::PlayerCom;
+
+mod manager;
+use manager::Manager;
+
 fn main() {
 	let player1_start = Point { x: 2, y: 2 };
 	let player2_start = Point { x: 15, y: 15 };
 
-	let mut p = match Plateau::new(30, 30, &player1_start, &player2_start) {
+	let plat = match Plateau::new(30, 30, &player1_start, &player2_start) {
 		Ok(plat) => plat,
 		Err(msg) => panic!(msg),
 	};
 
-	let pb = PieceBag::new([10, 11], [10, 11]);
+	let p_bag = PieceBag::new([3, 4], [3, 4]);
 
-	let piece_1 = pb.next();
-	let piece_2 = pb.next();
+    let p_com = PlayerCom::new(
+            String::from("./resources/players/gsteyn.filler"),
+            String::from("./resources/players/gsteyn.filler"),
+            2);
 
-	match p.place_piece(&piece_1, &Point { x: 0, y: 0 }, Player::Player1) {
-		Err(msg) => println!("Player1: {}", msg),
-		Ok(_) => (),
-	}
+    let mut steve = Manager::new(plat, p_bag, p_com);
 
-	match p.place_piece(&piece_2, &Point { x: 10, y: 10 }, Player::Player2) {
-		Err(msg) => println!("Player2: {}", msg),
-		Ok(_) => (),
-	}
-
-	print!("{}", p);
-	print!("{}", piece_1);
-	print!("{}", piece_2);
+    for _i in 0..9 {
+        steve.p1_move();
+        // steve.p2_move();
+    }
 }
