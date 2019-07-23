@@ -6,8 +6,8 @@ use point::Point;
 
 use super::player_com::PlayerCom;
 
-const P1_EXEC: &str = "$$$ exec p1 : [carli]\n"; // the player name should come from whatever reads the filenames / the cmdline args.
-const P2_EXEC: &str = "$$$ exec p2 : [carli]\n";
+const P1_EXEC: &str = "$$$ exec p1 : [gsteyn]\n"; // the player name should come from whatever reads the filenames / the cmdline args.
+const P2_EXEC: &str = "$$$ exec p2 : [gsteyn]\n";
 
 #[derive(PartialEq)]
 pub enum Winner {
@@ -68,14 +68,13 @@ impl Manager {
         }
 
         // println!("Aftermath: {}{}", self.plateau, piece);
-        self.set_winner(Winner::Player2);
         self.p1_move_count += 1;
     }
 
     pub fn p2_move(&mut self) {                         // Need to return Result
         let piece = self.piece_bag.next();
 
-        let msg = match self.p1_move_count {
+        let msg = match self.p2_move_count {
             0 => format!("{}{}{}", P2_EXEC, self.plateau, piece), // Consider implementing the 'exec' part inside player_com
             _ => format!("{}{}", self.plateau, piece),
         };
@@ -117,8 +116,8 @@ impl Manager {
 
         let cx = vec.get(0).unwrap();                   // Errors need to be handled and propagated
         let cy = vec.get(1).unwrap();                   // Errors need to be handled and propagated
-        let x = cx.parse::<u32>().expect("cx couldn't be parsed");
-        let y = cy.parse::<u32>().expect("cy couldn't be parsed");
+        let y = cx.parse::<u32>().expect("cx couldn't be parsed");
+        let x = cy.parse::<u32>().expect("cy couldn't be parsed");
 
         Point {x, y}
     }
