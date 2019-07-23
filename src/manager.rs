@@ -41,14 +41,18 @@ impl Manager {
         let piece = self.piece_bag.next();
 
         let msg = match self.p1_move_count {
-            0 => format!("{}{}{}", P1_EXEC, self.plateau, piece),
+            0 => format!("{}{}{}", P1_EXEC, self.plateau, piece), // Consider implementing the 'exec' part inside player_com
             _ => format!("{}{}", self.plateau, piece),
         };
 
         self.player_com.p1_send(msg);
         let response = match self.player_com.p1_receive() {
             Ok(s) => s,
-            Err(_) => panic!("Player1 error response"), // Replace with return of Result value
+            Err(_) => {
+                println!("Player1 timed out");
+                self.set_winner(Winner::Player2);
+                return;
+            },
         };
 
         // println!("Response: {}", response);
@@ -72,17 +76,21 @@ impl Manager {
         let piece = self.piece_bag.next();
 
         let msg = match self.p1_move_count {
-            0 => format!("{}{}{}", P2_EXEC, self.plateau, piece),
+            0 => format!("{}{}{}", P2_EXEC, self.plateau, piece), // Consider implementing the 'exec' part inside player_com
             _ => format!("{}{}", self.plateau, piece),
         };
 
         self.player_com.p2_send(msg);
         let response = match self.player_com.p2_receive() {
             Ok(s) => s,
-            Err(_) => panic!("Player2 error response"), // Replace with return of Result value
+            Err(_) => {
+                println!("Player2 timed out");
+                self.set_winner(Winner::Player1);
+                return;
+            },
         };
 
-        let placement = Manager::coordinates_from_string(response);
+        let placement = Manager::coordinates_from_string(response); // Proper error handling please
 
         match self.plateau.place_piece(&piece, &placement, Player::Player2) {
             Err(msg) => println!("Player2: {}", msg),

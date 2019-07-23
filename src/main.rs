@@ -9,7 +9,7 @@ mod player_com;
 use player_com::PlayerCom;
 
 mod manager;
-use manager::Manager;
+use manager::{Manager, Winner};
 
 fn main() {
 	let player1_start = Point { x: 2, y: 2 };
@@ -23,14 +23,20 @@ fn main() {
 	let p_bag = PieceBag::new([3, 4], [3, 4]);
 
     let p_com = PlayerCom::new(
-            String::from("./resources/players/gsteyn.filler"),
-            String::from("./resources/players/gsteyn.filler"),
+            String::from("./resources/players/carli.filler"),
+            String::from("./resources/players/carli.filler"),
             2);
 
     let mut steve = Manager::new(plat, p_bag, p_com);
 
-    for _i in 0..9 {
+    while steve.get_winner() == &Winner::None {
         steve.p1_move();
         // steve.p2_move();
+    }
+
+    match steve.get_winner() {
+        Winner::Player1 => println!("Player1 has won"),
+        Winner::Player2 => println!("Player2 has won"),
+        _ => (),
     }
 }
