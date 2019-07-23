@@ -31,7 +31,7 @@ fn main() {
     let mut steve = Manager::new(plat, p_bag, p_com);
 
     while steve.get_winner() == &Winner::None {
-        steve.p1_move();
+        steve.p1_move();            // Need to check for a winner after each player's move
         steve.p2_move();
     }
 

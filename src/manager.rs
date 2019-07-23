@@ -67,7 +67,7 @@ impl Manager {
             Ok(_) => (),
         }
 
-        // println!("Aftermath: {}{}", self.plateau, piece);
+        println!("Aftermath: {}{}", self.plateau, piece);
         self.p1_move_count += 1;
     }
 
