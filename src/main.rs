@@ -6,7 +6,7 @@ use plateau::{Plateau, Player};
 use point::Point;
 
 fn main() {
-    let player1_start = Point { x: 2, y: 2 };
+    let player1_start = Point { x: 4, y: 4 };
     let player2_start = Point { x: 15, y: 15 };
 
     let mut p = match Plateau::new(30, 30, &player1_start, &player2_start) {
@@ -19,7 +19,7 @@ fn main() {
     let piece_1 = pb.next();
     let piece_2 = pb.next();
 
-    match p.place_piece(&piece_1, &Point { x: 0, y: 0 }, Player::Player1) {
+    match p.place_piece(&piece_1, &Point { x: -1, y: 0 }, Player::Player1) {
         Err(msg) => println!("Player1: {}", msg),
         Ok(_) => (),
     }
