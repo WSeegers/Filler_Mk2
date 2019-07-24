@@ -1,35 +1,32 @@
-mod models;
-use models::*;
-
-use piece::PieceBag;
-use plateau::{Plateau, Player};
-use point::Point;
+extern crate clap;
 
 fn main() {
-    let player1_start = Point { x: 2, y: 2 };
-    let player2_start = Point { x: 15, y: 15 };
+    let player_arg = clap::Arg::with_name("player")
+        .short("p")
+        .long("player")
+        .takes_value(true)
+        .multiple(true)
+        .value_name("PLAYER_PATH");
 
-    let mut p = match Plateau::new(30, 30, &player1_start, &player2_start) {
-        Ok(plat) => plat,
-        Err(msg) => panic!(msg),
+    let clap_args = [player_arg];
+
+    let args = clap::App::new("Filler_mk2")
+        .version("0.1.0")
+        .author("Random Guys")
+        .about("About info")
+        .args(&clap_args)
+        .get_matches();
+
+    match args.occurrences_of("player") {
+        0 => panic!("No Players"),
+        x if x == 1 || x == 2 => println!("No of players: {}", x),
+        _ => panic!("Maximum of 2 players"),
     };
 
-    let pb = PieceBag::new([10, 11], [10, 11]);
+    let players: Vec<&str> = args
+        .values_of("player")
+        .expect("Error getting players")
+        .collect();
 
-    let piece_1 = pb.next();
-    let piece_2 = pb.next();
-
-    match p.place_piece(&piece_1, &Point { x: 0, y: 0 }, Player::Player1) {
-        Err(msg) => println!("Player1: {}", msg),
-        Ok(_) => (),
-    }
-
-    match p.place_piece(&piece_2, &Point { x: 10, y: 10 }, Player::Player2) {
-        Err(msg) => println!("Player2: {}", msg),
-        Ok(_) => (),
-    }
-
-    print!("{}", p);
-    print!("{}", piece_1);
-    print!("{}", piece_2);
+    println!("{:?}", players);
 }
