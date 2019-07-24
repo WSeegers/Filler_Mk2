@@ -4,8 +4,34 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
 use std::thread;
 use std::time::Duration;
+use std::fmt;
 
 use super::plateau::Player;
+
+pub struct PlayerError {
+    player: Player,
+    msg: String,
+}
+
+impl fmt::Display for PlayerError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let num = match self.player {
+            Player::Player1 => 1,
+            Player::Player2 => 2
+        };
+        write!(f, "Player {} Error: {})", num, self.msg)
+    }
+}
+
+pub struct ComError {
+    msg: String,
+}
+
+impl fmt::Display for ComError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.msg)
+    }
+}
 
 pub struct PlayerCom {
     player1_sender: Sender<std::string::String>,
@@ -16,7 +42,7 @@ pub struct PlayerCom {
 }
 
 impl PlayerCom {
-    pub fn new(path1: String, path2: String, timeout: u64) -> PlayerCom {
+    pub fn new(path1: String, path2: String, timeout: u64) -> Result<PlayerCom, ComError> {
         let (p1_sender, p1_receiver) = PlayerCom::spawn_child_process(path1, Player::Player1);
         let (p2_sender, p2_receiver) = PlayerCom::spawn_child_process(path2, Player::Player2);
 
@@ -29,30 +55,50 @@ impl PlayerCom {
         }
     }
 
-    pub fn p1_send(&self, message: String) {
-        self.player1_sender
-            .send(message)
-            .expect("Error while sending message to player1");
+    pub fn p1_send(&self, message: String) -> Result<(), PlayerError> {
+        match self.player1_sender.send(message) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(PlayerError {
+                player: Player::Player1,
+                msg: String::from("Error while sending message")
+            })
+        }
     }
 
-    pub fn p2_send(&self, message: String) {
-        self.player2_sender
-            .send(message)
-            .expect("Error while sending message to player2");
+    pub fn p2_send(&self, message: String) -> Result<(), PlayerError> {
+        match self.player2_sender.send(message) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(PlayerError {
+                player: Player::Player2,
+                msg: String::from("Error while sending message")
+            })
+        }
     }
 
-    pub fn p1_receive(&self) -> Result<String, RecvTimeoutError> {
+    pub fn p1_receive(&self) -> Result<String, PlayerError> {
         let s = self
             .player1_receiver
-            .recv_timeout(Duration::from_secs(self.timeout))?;
-        Ok(s)
+            .recv_timeout(Duration::from_secs(self.timeout));
+        match s {
+            Ok(s) => Ok(s),
+            Err(_) => Err(PlayerError {
+                player: Player::Player1,
+                msg: String::from("Timed out")
+            })
+        }
     }
 
-    pub fn p2_receive(&self) -> Result<String, RecvTimeoutError> {
+    pub fn p2_receive(&self) -> Result<String, PlayerError> {
         let s = self
             .player2_receiver
-            .recv_timeout(Duration::from_secs(self.timeout))?;
-        Ok(s)
+            .recv_timeout(Duration::from_secs(self.timeout));
+        match s {
+            Ok(s) => Ok(s),
+            Err(_) => Err(PlayerError {
+                player: Player::Player2,
+                msg: String::from("Timed out")
+            })
+        }
     }
 }
 
@@ -61,38 +107,64 @@ impl PlayerCom {
     fn spawn_child_process(
         path: String,
         player_num: Player,
-    ) -> (Sender<std::string::String>, Receiver<std::string::String>) {
+    ) -> Result<(Sender<std::string::String>, Receiver<std::string::String>), ComError> {
         let (sender, receiver_internal) = mpsc::channel();
         let (sender_internal, receiver) = mpsc::channel();
 
         thread::spawn(move || {
-            let mut child_process = Command::new(&path)
+            let mut child_process = match Command::new(&path)
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .spawn()
-                .unwrap_or_else(|_| panic!("Could not initialize player: {}", path));
+            {
+                Ok(res) => res,
+                Err(_) => return Err(ComError {
+                    msg: String::from(format!("Could not initialize player: {}", path))
+                })
+            };
 
-            let child_in = child_process
+            let child_in = match child_process
                 .stdin
                 .as_mut()
-                .unwrap_or_else(|| panic!("Could not retrieve stdin for: {}", path));
+            {
+                Some(res) => res,
+                None => return Err(ComError {
+                    msg: String::from(format!("Could not retrieve stdin for: {}", path))
+                })
+            };
+
             let mut child_out = BufReader::new(
-                child_process
+                match child_process
                     .stdout
                     .as_mut()
-                    .unwrap_or_else(|| panic!("Could not retrieve stdout for: {}", path)),
+                {
+                    Some(res) => res,
+                    None => return Err(ComError {
+                        msg: String::from(format!("Could not retrieve stdout for: {}", path))
+                    })
+                }
             );
 
             match player_num {
                 Player::Player1 => {
-                    child_in
+                    match child_in
                         .write(format!("$$$ exec p1 : {}\n", path).as_bytes())
-                        .unwrap();
+                    {
+                        Ok(_) => (),
+                        Err(_) => return Err(ComError {
+                            msg: String::from(format!("Error initializing player 1"))
+                        })
+                    }
                 }
                 Player::Player2 => {
-                    child_in
+                    match child_in
                         .write(format!("$$$ exec p2 : {}\n", path).as_bytes())
-                        .unwrap();
+                    {
+                        Ok(_) => (),
+                        Err(_) => return Err(ComError {
+                            msg: String::from(format!("Error initializing player 2"))
+                        })
+                    }
                 }
             }
 

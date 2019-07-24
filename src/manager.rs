@@ -4,7 +4,9 @@ use piece::PieceBag;
 use plateau::{Plateau, Player};
 use point::Point;
 
-use super::player_com::PlayerCom;
+use super::player_com::{PlayerCom, PlayerError, ComError};
+
+use std::fmt;
 
 #[derive(PartialEq)]
 pub enum Winner {
@@ -34,7 +36,7 @@ impl Manager {
         }
     }
 
-    pub fn p1_move(&mut self) {
+    pub fn p1_move(&mut self) -> Result<(), PlayerError> {
         let piece = self.piece_bag.next();
 
         let msg = format!("{}{}", self.plateau, piece);
