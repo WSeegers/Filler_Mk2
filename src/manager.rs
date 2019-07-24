@@ -34,7 +34,7 @@ impl Manager {
         }
     }
 
-    pub fn p1_move(&mut self) {                         // Need to return Result
+    pub fn p1_move(&mut self) {
         let piece = self.piece_bag.next();
 
         let msg = format!("{}{}", self.plateau, piece);
@@ -46,7 +46,7 @@ impl Manager {
                 println!("Player1 timed out");
                 self.set_winner(Winner::Player2);
                 return;
-            },
+            }
         };
 
         let placement = match Manager::coordinates_from_string(response) {
@@ -55,10 +55,13 @@ impl Manager {
                 println!("Player1: {}", s);
                 self.set_winner(Winner::Player2);
                 return;
-            },
+            }
         };
 
-        match self.plateau.place_piece(&piece, &placement, Player::Player1) {
+        match self
+            .plateau
+            .place_piece(&piece, &placement, Player::Player1)
+        {
             Err(msg) => {
                 println!("Player1: {}", msg);
                 self.set_winner(Winner::Player2);
@@ -66,11 +69,10 @@ impl Manager {
             Ok(_) => (),
         }
 
-        println!("Aftermath: {}{}", self.plateau, piece);
         self.p1_move_count += 1;
     }
 
-    pub fn p2_move(&mut self) {                         // Need to return Result
+    pub fn p2_move(&mut self) {
         let piece = self.piece_bag.next();
 
         let msg = format!("{}{}", self.plateau, piece);
@@ -82,7 +84,7 @@ impl Manager {
                 println!("Player2 timed out");
                 self.set_winner(Winner::Player1);
                 return;
-            },
+            }
         };
 
         let placement = match Manager::coordinates_from_string(response) {
@@ -91,10 +93,13 @@ impl Manager {
                 println!("Player2: {}", s);
                 self.set_winner(Winner::Player1);
                 return;
-            },
+            }
         };
 
-        match self.plateau.place_piece(&piece, &placement, Player::Player2) {
+        match self
+            .plateau
+            .place_piece(&piece, &placement, Player::Player2)
+        {
             Err(msg) => println!("Player2: {}", msg),
             Ok(_) => (),
         }
@@ -127,13 +132,13 @@ impl Manager {
         };
         let x = match cx.parse::<i32>() {
             Ok(i) => i,
-            Err(_) => return Err(String::from("Invalid coordinate x from player")),
+            Err(_) => return Err(String::from("Invalid coordinate x")),
         };
         let y = match cy.parse::<i32>() {
             Ok(i) => i,
-            Err(_) => return Err(String::from("Invalid coordinate y from player")),
+            Err(_) => return Err(String::from("Invalid coordinate y")),
         };
 
-        Ok(Point {x, y})
+        Ok(Point { x, y })
     }
 }

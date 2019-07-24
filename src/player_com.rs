@@ -1,9 +1,9 @@
+use std::io::{BufRead, BufReader, Write};
+use std::process::{Command, Stdio};
 use std::sync::mpsc;
-use std::sync::mpsc::{Sender, Receiver, RecvTimeoutError};
+use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
 use std::thread;
 use std::time::Duration;
-use std::process::{Command, Stdio};
-use std::io::{BufRead, Write, BufReader};
 
 use super::plateau::Player;
 
@@ -42,13 +42,15 @@ impl PlayerCom {
     }
 
     pub fn p1_receive(&self) -> Result<String, RecvTimeoutError> {
-        let s = self.player1_receiver
+        let s = self
+            .player1_receiver
             .recv_timeout(Duration::from_secs(self.timeout))?;
         Ok(s)
     }
 
     pub fn p2_receive(&self) -> Result<String, RecvTimeoutError> {
-        let s = self.player2_receiver
+        let s = self
+            .player2_receiver
             .recv_timeout(Duration::from_secs(self.timeout))?;
         Ok(s)
     }
@@ -56,7 +58,10 @@ impl PlayerCom {
 
 /* Helper functions */
 impl PlayerCom {
-    fn spawn_child_process(path: String, player_num: Player) -> (Sender<std::string::String>, Receiver<std::string::String>) {
+    fn spawn_child_process(
+        path: String,
+        player_num: Player,
+    ) -> (Sender<std::string::String>, Receiver<std::string::String>) {
         let (sender, receiver_internal) = mpsc::channel();
         let (sender_internal, receiver) = mpsc::channel();
 
@@ -67,16 +72,28 @@ impl PlayerCom {
                 .spawn()
                 .unwrap_or_else(|_| panic!("Could not initialize player: {}", path));
 
-            let child_in = child_process.stdin
+            let child_in = child_process
+                .stdin
                 .as_mut()
                 .unwrap_or_else(|| panic!("Could not retrieve stdin for: {}", path));
-            let mut child_out = BufReader::new(child_process.stdout
-                .as_mut()
-                .unwrap_or_else(|| panic!("Could not retrieve stdout for: {}", path)));
+            let mut child_out = BufReader::new(
+                child_process
+                    .stdout
+                    .as_mut()
+                    .unwrap_or_else(|| panic!("Could not retrieve stdout for: {}", path)),
+            );
 
             match player_num {
-                Player::Player1 => {child_in.write(format!("$$$ exec p1 : {}\n", path).as_bytes()).unwrap();},
-                Player::Player2 => {child_in.write(format!("$$$ exec p2 : {}\n", path).as_bytes()).unwrap();},
+                Player::Player1 => {
+                    child_in
+                        .write(format!("$$$ exec p1 : {}\n", path).as_bytes())
+                        .unwrap();
+                }
+                Player::Player2 => {
+                    child_in
+                        .write(format!("$$$ exec p2 : {}\n", path).as_bytes())
+                        .unwrap();
+                }
             }
 
             loop {

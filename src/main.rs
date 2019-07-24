@@ -25,16 +25,15 @@ fn main() {
     let p_bag = PieceBag::new([5, 7], [5, 7]);
 
     let p_com = PlayerCom::new(
-            String::from("./resources/players/carli.filler"),
-            String::from("./resources/players/carli.filler"),
-            2
+        String::from("./resources/players/carli.filler"),
+        String::from("./resources/players/carli.filler"),
+        2,
     );
-
 
     let mut steve = Manager::new(plat, p_bag, p_com);
 
     loop {
-        steve.p1_move();            // Need to check for a winner after each player's move
+        steve.p1_move(); // Need to check for a winner after each player's move
         if steve.get_winner() != &Winner::None {
             break;
         }
