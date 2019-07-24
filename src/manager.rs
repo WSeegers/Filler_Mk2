@@ -49,9 +49,14 @@ impl Manager {
             },
         };
 
-        // println!("Response: {}", response);
-        let placement = Manager::coordinates_from_string(response);
-        // println!("Placement: {:?}", placement);
+        let placement = match Manager::coordinates_from_string(response) {
+            Ok(point) => point,
+            Err(s) => {
+                println!("Player1: {}", s);
+                self.set_winner(Winner::Player2);
+                return;
+            },
+        };
 
         match self.plateau.place_piece(&piece, &placement, Player::Player1) {
             Err(msg) => {
@@ -80,7 +85,14 @@ impl Manager {
             },
         };
 
-        let placement = Manager::coordinates_from_string(response); // Proper error handling please
+        let placement = match Manager::coordinates_from_string(response) {
+            Ok(point) => point,
+            Err(s) => {
+                println!("Player2: {}", s);
+                self.set_winner(Winner::Player1);
+                return;
+            },
+        };
 
         match self.plateau.place_piece(&piece, &placement, Player::Player2) {
             Err(msg) => println!("Player2: {}", msg),
@@ -101,15 +113,27 @@ impl Manager {
 
 /* Helper functions */
 impl Manager {
-    fn coordinates_from_string(input: String) -> Point {
+    fn coordinates_from_string(input: String) -> Result<Point, String> {
         let coordinates = input.trim().split(" ");
         let vec = coordinates.collect::<Vec<&str>>();
 
-        let cx = vec.get(0).unwrap();                   // Errors need to be handled and propagated
-        let cy = vec.get(1).unwrap();                   // Errors need to be handled and propagated
-        let y = cx.parse::<i32>().expect("cx couldn't be parsed");
-        let x = cy.parse::<i32>().expect("cy couldn't be parsed");
+        let cy = match vec.get(0) {
+            Some(s) => s,
+            None => return Err(String::from("Bad input from player")),
+        };
+        let cx = match vec.get(1) {
+            Some(s) => s,
+            None => return Err(String::from("Bad input from player")),
+        };
+        let x = match cx.parse::<i32>() {
+            Ok(i) => i,
+            Err(_) => return Err(String::from("Invalid coordinate x from player")),
+        };
+        let y = match cy.parse::<i32>() {
+            Ok(i) => i,
+            Err(_) => return Err(String::from("Invalid coordinate y from player")),
+        };
 
-        Point {x, y}
+        Ok(Point {x, y})
     }
 }
