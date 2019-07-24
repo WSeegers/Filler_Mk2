@@ -5,6 +5,8 @@ use std::time::Duration;
 use std::process::{Command, Stdio};
 use std::io::{BufRead, Write, BufReader};
 
+use super::plateau::Player;
+
 pub struct PlayerCom {
     player1_sender: Sender<std::string::String>,
     player1_receiver: Receiver<std::string::String>,
@@ -15,8 +17,8 @@ pub struct PlayerCom {
 
 impl PlayerCom {
     pub fn new(path1: String, path2: String, timeout: u64) -> PlayerCom {
-        let (p1_sender, p1_receiver) = PlayerCom::spawn_child_process(path1);
-        let (p2_sender, p2_receiver) = PlayerCom::spawn_child_process(path2);
+        let (p1_sender, p1_receiver) = PlayerCom::spawn_child_process(path1, Player::Player1);
+        let (p2_sender, p2_receiver) = PlayerCom::spawn_child_process(path2, Player::Player2);
 
         PlayerCom {
             player1_sender: p1_sender,
@@ -54,7 +56,7 @@ impl PlayerCom {
 
 /* Helper functions */
 impl PlayerCom {
-    fn spawn_child_process(path: String) -> (Sender<std::string::String>, Receiver<std::string::String>) {
+    fn spawn_child_process(path: String, player_num: Player) -> (Sender<std::string::String>, Receiver<std::string::String>) {
         let (sender, receiver_internal) = mpsc::channel();
         let (sender_internal, receiver) = mpsc::channel();
 
@@ -71,6 +73,11 @@ impl PlayerCom {
             let mut child_out = BufReader::new(child_process.stdout
                 .as_mut()
                 .unwrap_or_else(|| panic!("Could not retrieve stdout for: {}", path)));
+
+            match player_num {
+                Player::Player1 => {child_in.write(format!("$$$ exec p1 : {}\n", path).as_bytes()).unwrap();},
+                Player::Player2 => {child_in.write(format!("$$$ exec p2 : {}\n", path).as_bytes()).unwrap();},
+            }
 
             loop {
                 let receive: String = receiver_internal
