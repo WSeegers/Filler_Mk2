@@ -5,14 +5,12 @@ use std::path;
 fn validate_player_path(path: String) -> Result<(), String> {
     let path = path::Path::new(&path);
 
-    println!("ex: {}", path.extension().unwrap().to_str().unwrap());
-
     match path.exists() {
-        false => Err(String::from("Path invaild: File not found")),
-        true if path.is_dir() => Err(String::from("Path invaild: Directory not found")),
+        false => Err(String::from("Path invalid: Path not found")),
+        true if path.is_dir() => Err(String::from("Path invalid: Path is directory")),
         true => match path.extension() {
             Some(ex) if ex == "filler" => Ok(()),
-            _ => Err(String::from("File invaild: '.filler' file required")),
+            _ => Err(String::from("File invalid: '.filler' file required")),
         },
     }
 }
