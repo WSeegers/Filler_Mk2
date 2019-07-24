@@ -11,16 +11,18 @@ use player_com::PlayerCom;
 mod manager;
 use manager::{Manager, Winner};
 
+use std::{thread, time};
+
 fn main() {
     let player1_start = Point { x: 4, y: 4 };
-    let player2_start = Point { x: 15, y: 15 };
+    let player2_start = Point { x: 45, y: 45 };
 
-    let plat = match Plateau::new(200, 100, &player1_start, &player2_start) {
+    let plat = match Plateau::new(50, 50, &player1_start, &player2_start) {
         Ok(plat) => plat,
         Err(msg) => panic!(msg),
     };
 
-    let p_bag = PieceBag::new([10, 15], [10, 15]);
+    let p_bag = PieceBag::new([5, 7], [5, 7]);
 
     let p_com = PlayerCom::new(
             String::from("./resources/players/carli.filler"),
@@ -28,11 +30,18 @@ fn main() {
             2
     );
 
+
     let mut steve = Manager::new(plat, p_bag, p_com);
 
-    while steve.get_winner() == &Winner::None {
+    loop {
         steve.p1_move();            // Need to check for a winner after each player's move
+        if steve.get_winner() != &Winner::None {
+            break;
+        }
         steve.p2_move();
+        if steve.get_winner() != &Winner::None {
+            break;
+        }
     }
 
     match steve.get_winner() {
