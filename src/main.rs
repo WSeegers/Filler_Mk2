@@ -43,6 +43,9 @@ fn main() {
                 break;
             }
         }
+        print!("{}", steve.get_plateau());
+        print!("{}", steve.get_current_piece().as_ref().unwrap());
+        print!("<got (O): {}", steve.get_p1_last_move().as_ref().unwrap());
         match steve.p2_move() {
             Ok(_) => (),
             Err(e) => {
@@ -51,6 +54,8 @@ fn main() {
             }
         }
         print!("{}", steve.get_plateau());
+        print!("{}", steve.get_current_piece().as_ref().unwrap());
+        println!("<got (X): {}", steve.get_p2_last_move().as_ref().unwrap());
     }
 
     let (p1_mc, p2_mc) = steve.get_move_counts();
