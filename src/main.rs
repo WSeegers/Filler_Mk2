@@ -53,9 +53,13 @@ fn main() {
         print!("{}", steve.get_plateau());
     }
 
-    match steve.get_winner() {
-        Winner::Player1 => println!("Player1 has won"),
-        Winner::Player2 => println!("Player2 has won"),
-        _ => println!("No winner?"),
+    let (p1_mc, p2_mc) = steve.get_move_counts();
+
+    if p1_mc > p2_mc {
+        println!("Player1 has won");
+    } else if p2_mc > p1_mc {
+        println!("Player2 has won");
+    } else {
+        println!("It was a draw!");
     }
 }

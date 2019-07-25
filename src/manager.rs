@@ -41,7 +41,7 @@ impl Manager {
 
         let msg = format!("{}{}", self.plateau, piece);
 
-        self.player_com.p1_send(msg);
+        self.player_com.p1_send(msg)?;
         let response = self.player_com.p1_receive()?;
 
         let placement = match Manager::coordinates_from_string(response) {
@@ -66,7 +66,7 @@ impl Manager {
 
         let msg = format!("{}{}", self.plateau, piece);
 
-        self.player_com.p2_send(msg);
+        self.player_com.p2_send(msg)?;
         let response = self.player_com.p2_receive()?;
 
         let placement = match Manager::coordinates_from_string(response) {
@@ -94,8 +94,12 @@ impl Manager {
         &self.winner
     }
 
-    fn set_winner(&mut self, winner: Winner) {
+    pub fn set_winner(&mut self, winner: Winner) {
         self.winner = winner;
+    }
+
+    pub fn get_move_counts(&self) -> (u32, u32) {
+        (self.p1_move_count, self.p2_move_count)
     }
 }
 
@@ -107,19 +111,19 @@ impl Manager {
 
         let cy = match vec.get(0) {
             Some(s) => s,
-            None => return Err(String::from("Bad input from player")),
+            None => return Err(format!("Bad input: {}", input)),
         };
         let cx = match vec.get(1) {
             Some(s) => s,
-            None => return Err(String::from("Bad input from player")),
+            None => return Err(format!("Bad input: {}", input)),
         };
         let x = match cx.parse::<i32>() {
             Ok(i) => i,
-            Err(_) => return Err(String::from("Invalid coordinate x")),
+            Err(_) => return Err(format!("Invalid x coordinate: {}", input)),
         };
         let y = match cy.parse::<i32>() {
             Ok(i) => i,
-            Err(_) => return Err(String::from("Invalid coordinate y")),
+            Err(_) => return Err(format!("Invalid y coordinate: {}", input)),
         };
 
         Ok(Point { x, y })

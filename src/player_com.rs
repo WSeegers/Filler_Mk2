@@ -25,7 +25,7 @@ impl fmt::Display for PlayerError {
             Player::Player1 => 1,
             Player::Player2 => 2,
         };
-        write!(f, "Player {} Error: {})", num, self.msg)
+        write!(f, "Player {} - Error: {}", num, self.msg)
     }
 }
 
@@ -70,20 +70,20 @@ impl PlayerCom {
     pub fn p1_send(&self, message: String) -> Result<(), PlayerError> {
         match self.player1_sender.send(message) {
             Ok(_) => Ok(()),
-            Err(_) => Err(PlayerError {
-                player: Player::Player1,
-                msg: String::from("Error while sending message"),
-            }),
+            Err(_) => Err(PlayerError::new(
+                Player::Player1,
+                String::from("Error while sending message"),
+            )),
         }
     }
 
     pub fn p2_send(&self, message: String) -> Result<(), PlayerError> {
         match self.player2_sender.send(message) {
             Ok(_) => Ok(()),
-            Err(_) => Err(PlayerError {
-                player: Player::Player2,
-                msg: String::from("Error while sending message"),
-            }),
+            Err(_) => Err(PlayerError::new(
+                Player::Player2,
+                String::from("Error while sending message"),
+            )),
         }
     }
 
@@ -93,10 +93,7 @@ impl PlayerCom {
             .recv_timeout(Duration::from_secs(self.timeout));
         match s {
             Ok(s) => Ok(s),
-            Err(_) => Err(PlayerError {
-                player: Player::Player1,
-                msg: String::from("Timed out"),
-            }),
+            Err(_) => Err(PlayerError::new(Player::Player1, String::from("Timed out"))),
         }
     }
 
@@ -106,10 +103,7 @@ impl PlayerCom {
             .recv_timeout(Duration::from_secs(self.timeout));
         match s {
             Ok(s) => Ok(s),
-            Err(_) => Err(PlayerError {
-                player: Player::Player2,
-                msg: String::from("Timed out"),
-            }),
+            Err(_) => Err(PlayerError::new(Player::Player2, String::from("Timed out"))),
         }
     }
 }
@@ -154,7 +148,7 @@ impl PlayerCom {
             loop {
                 let receive: String = receiver_internal
                     .recv()
-                    .unwrap_or_else(|_| panic!("Error receiving message from: {}", path));
+                    .unwrap_or_else(|_| String::from(""));
                 child_in
                     .write(receive.as_bytes())
                     .unwrap_or_else(|_| panic!("Error writing to: {}", path));
