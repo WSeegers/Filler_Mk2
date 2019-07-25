@@ -4,7 +4,7 @@ use piece::PieceBag;
 use plateau::{Plateau, Player};
 use point::Point;
 
-use super::player_com::{PlayerCom, PlayerError, ComError};
+use super::player_com::{ComError, PlayerCom, PlayerError};
 
 use std::fmt;
 
@@ -42,71 +42,52 @@ impl Manager {
         let msg = format!("{}{}", self.plateau, piece);
 
         self.player_com.p1_send(msg);
-        let response = match self.player_com.p1_receive() {
-            Ok(s) => s,
-            Err(_) => {
-                println!("Player1 timed out");
-                self.set_winner(Winner::Player2);
-                return;
-            }
-        };
+        let response = self.player_com.p1_receive()?;
 
         let placement = match Manager::coordinates_from_string(response) {
             Ok(point) => point,
-            Err(s) => {
-                println!("Player1: {}", s);
-                self.set_winner(Winner::Player2);
-                return;
-            }
+            Err(msg) => return Err(PlayerError::new(Player::Player1, msg)),
         };
 
         match self
             .plateau
             .place_piece(&piece, &placement, Player::Player1)
         {
-            Err(msg) => {
-                println!("Player1: {}", msg);
-                self.set_winner(Winner::Player2);
-            }
             Ok(_) => (),
+            Err(msg) => return Err(PlayerError::new(Player::Player1, msg)),
         }
 
         self.p1_move_count += 1;
+        Ok(())
     }
 
-    pub fn p2_move(&mut self) {
+    pub fn p2_move(&mut self) -> Result<(), PlayerError> {
         let piece = self.piece_bag.next();
 
         let msg = format!("{}{}", self.plateau, piece);
 
         self.player_com.p2_send(msg);
-        let response = match self.player_com.p2_receive() {
-            Ok(s) => s,
-            Err(_) => {
-                println!("Player2 timed out");
-                self.set_winner(Winner::Player1);
-                return;
-            }
-        };
+        let response = self.player_com.p2_receive()?;
 
         let placement = match Manager::coordinates_from_string(response) {
             Ok(point) => point,
-            Err(s) => {
-                println!("Player2: {}", s);
-                self.set_winner(Winner::Player1);
-                return;
-            }
+            Err(msg) => return Err(PlayerError::new(Player::Player2, msg)),
         };
 
         match self
             .plateau
             .place_piece(&piece, &placement, Player::Player2)
         {
-            Err(msg) => println!("Player2: {}", msg),
             Ok(_) => (),
+            Err(msg) => return Err(PlayerError::new(Player::Player2, msg)),
         }
 
         self.p2_move_count += 1;
+        Ok(())
+    }
+
+    pub fn get_plateau(&self) -> &Plateau {
+        &self.plateau
     }
 
     pub fn get_winner(&self) -> &Winner {

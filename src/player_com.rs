@@ -1,10 +1,10 @@
+use std::fmt;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
 use std::thread;
 use std::time::Duration;
-use std::fmt;
 
 use super::plateau::Player;
 
@@ -13,11 +13,17 @@ pub struct PlayerError {
     msg: String,
 }
 
+impl PlayerError {
+    pub fn new(player: Player, msg: String) -> Self {
+        Self { player, msg }
+    }
+}
+
 impl fmt::Display for PlayerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let num = match self.player {
             Player::Player1 => 1,
-            Player::Player2 => 2
+            Player::Player2 => 2,
         };
         write!(f, "Player {} Error: {})", num, self.msg)
     }
@@ -25,6 +31,12 @@ impl fmt::Display for PlayerError {
 
 pub struct ComError {
     msg: String,
+}
+
+impl ComError {
+    pub fn new(msg: String) -> Self {
+        Self { msg }
+    }
 }
 
 impl fmt::Display for ComError {
@@ -43,16 +55,16 @@ pub struct PlayerCom {
 
 impl PlayerCom {
     pub fn new(path1: String, path2: String, timeout: u64) -> Result<PlayerCom, ComError> {
-        let (p1_sender, p1_receiver) = PlayerCom::spawn_child_process(path1, Player::Player1);
-        let (p2_sender, p2_receiver) = PlayerCom::spawn_child_process(path2, Player::Player2);
+        let (p1_sender, p1_receiver) = PlayerCom::spawn_child_process(path1, Player::Player1)?;
+        let (p2_sender, p2_receiver) = PlayerCom::spawn_child_process(path2, Player::Player2)?;
 
-        PlayerCom {
+        Ok(PlayerCom {
             player1_sender: p1_sender,
             player1_receiver: p1_receiver,
             player2_sender: p2_sender,
             player2_receiver: p2_receiver,
             timeout,
-        }
+        })
     }
 
     pub fn p1_send(&self, message: String) -> Result<(), PlayerError> {
@@ -60,8 +72,8 @@ impl PlayerCom {
             Ok(_) => Ok(()),
             Err(_) => Err(PlayerError {
                 player: Player::Player1,
-                msg: String::from("Error while sending message")
-            })
+                msg: String::from("Error while sending message"),
+            }),
         }
     }
 
@@ -70,8 +82,8 @@ impl PlayerCom {
             Ok(_) => Ok(()),
             Err(_) => Err(PlayerError {
                 player: Player::Player2,
-                msg: String::from("Error while sending message")
-            })
+                msg: String::from("Error while sending message"),
+            }),
         }
     }
 
@@ -83,8 +95,8 @@ impl PlayerCom {
             Ok(s) => Ok(s),
             Err(_) => Err(PlayerError {
                 player: Player::Player1,
-                msg: String::from("Timed out")
-            })
+                msg: String::from("Timed out"),
+            }),
         }
     }
 
@@ -96,8 +108,8 @@ impl PlayerCom {
             Ok(s) => Ok(s),
             Err(_) => Err(PlayerError {
                 player: Player::Player2,
-                msg: String::from("Timed out")
-            })
+                msg: String::from("Timed out"),
+            }),
         }
     }
 }
@@ -112,61 +124,32 @@ impl PlayerCom {
         let (sender_internal, receiver) = mpsc::channel();
 
         thread::spawn(move || {
-            let mut child_process = match Command::new(&path)
+            let mut child_process = Command::new(&path)
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .spawn()
-            {
-                Ok(res) => res,
-                Err(_) => return Err(ComError {
-                    msg: String::from(format!("Could not initialize player: {}", path))
-                })
-            };
+                .unwrap_or_else(|_| panic!("Could not initialize player: {}", path));
 
-            let child_in = match child_process
+            let child_in = child_process
                 .stdin
                 .as_mut()
-            {
-                Some(res) => res,
-                None => return Err(ComError {
-                    msg: String::from(format!("Could not retrieve stdin for: {}", path))
-                })
-            };
+                .unwrap_or_else(|| panic!("Could not retrieve stdin for: {}", path));
 
             let mut child_out = BufReader::new(
-                match child_process
+                child_process
                     .stdout
                     .as_mut()
-                {
-                    Some(res) => res,
-                    None => return Err(ComError {
-                        msg: String::from(format!("Could not retrieve stdout for: {}", path))
-                    })
-                }
+                    .unwrap_or_else(|| panic!("Could not retrieve stdout for: {}", path)),
             );
 
             match player_num {
-                Player::Player1 => {
-                    match child_in
-                        .write(format!("$$$ exec p1 : {}\n", path).as_bytes())
-                    {
-                        Ok(_) => (),
-                        Err(_) => return Err(ComError {
-                            msg: String::from(format!("Error initializing player 1"))
-                        })
-                    }
-                }
-                Player::Player2 => {
-                    match child_in
-                        .write(format!("$$$ exec p2 : {}\n", path).as_bytes())
-                    {
-                        Ok(_) => (),
-                        Err(_) => return Err(ComError {
-                            msg: String::from(format!("Error initializing player 2"))
-                        })
-                    }
-                }
-            }
+                Player::Player1 => child_in
+                    .write(format!("$$$ exec p1 : {}\n", path).as_bytes())
+                    .unwrap_or_else(|_| panic!("Error initializing player 1")),
+                Player::Player2 => child_in
+                    .write(format!("$$$ exec p2 : {}\n", path).as_bytes())
+                    .unwrap_or_else(|_| panic!("Error initializing player 2")),
+            };
 
             loop {
                 let receive: String = receiver_internal
@@ -185,6 +168,6 @@ impl PlayerCom {
             }
         });
 
-        (sender, receiver)
+        Ok((sender, receiver))
     }
 }

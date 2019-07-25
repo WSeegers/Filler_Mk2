@@ -24,28 +24,38 @@ fn main() {
 
     let p_bag = PieceBag::new([5, 7], [5, 7]);
 
-    let p_com = PlayerCom::new(
-        String::from("./resources/players/carli.filler"),
-        String::from("./resources/players/carli.filler"),
+    let p_com = match PlayerCom::new(
+        String::from("./resources/players/gsteyn.filler"),
+        String::from("./resources/players/gsteyn.filler"),
         2,
-    );
+    ) {
+        Ok(manager) => manager,
+        Err(e) => panic!("{}", e),
+    };
 
     let mut steve = Manager::new(plat, p_bag, p_com);
 
     loop {
-        steve.p1_move(); // Need to check for a winner after each player's move
-        if steve.get_winner() != &Winner::None {
-            break;
+        match steve.p1_move() {
+            Ok(_) => (),
+            Err(e) => {
+                println!("{}", e);
+                break;
+            }
         }
-        steve.p2_move();
-        if steve.get_winner() != &Winner::None {
-            break;
+        match steve.p2_move() {
+            Ok(_) => (),
+            Err(e) => {
+                println!("{}", e);
+                break;
+            }
         }
+        print!("{}", steve.get_plateau());
     }
 
     match steve.get_winner() {
         Winner::Player1 => println!("Player1 has won"),
         Winner::Player2 => println!("Player2 has won"),
-        _ => (),
+        _ => println!("No winner?"),
     }
 }
