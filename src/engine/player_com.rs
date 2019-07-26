@@ -29,21 +29,7 @@ impl fmt::Display for PlayerError {
     }
 }
 
-pub struct ComError {
-    msg: String,
-}
-
-impl ComError {
-    pub fn new(msg: String) -> Self {
-        Self { msg }
-    }
-}
-
-impl fmt::Display for ComError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.msg)
-    }
-}
+pub type ComError = String;
 
 pub struct PlayerCom {
     player1_sender: Sender<std::string::String>,
