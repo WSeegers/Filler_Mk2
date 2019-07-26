@@ -1,3 +1,5 @@
+mod parser;
+
 use crate::models::{piece, point};
 
 use piece::Piece;
