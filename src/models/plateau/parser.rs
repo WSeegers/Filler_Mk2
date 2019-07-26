@@ -17,7 +17,7 @@ impl TryFrom<String> for Plateau {
 		let mut cells = Vec::new();
 		for (y, row) in map.lines().enumerate() {
 			if row.len() != width {
-				return Err(format!("Rows sizes are inconsistant"));
+				return Err(String::from("Rows sizes are inconsistent"));
 			}
 
 			for (x, c) in row.chars().enumerate() {
