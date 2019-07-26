@@ -5,13 +5,12 @@ use std::path;
 mod models;
 use models::{PieceBag, Plateau, Point};
 
-mod player_manager;
+mod engine;
 
-use player_manager::{
-    manager::{Manager, Winner},
+use engine::{
+    player_manager::{Manager, Winner},
     player_com::PlayerCom,
 };
-// use player_manager::manager::{Manager, Winner};
 
 fn validate_player_path(path: String) -> Result<(), String> {
     let path = path::Path::new(&path);
