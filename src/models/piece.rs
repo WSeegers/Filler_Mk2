@@ -1,6 +1,4 @@
-use crate::models::point;
-
-use point::Point;
+use super::point::Point;
 
 use rand::prelude::*;
 use std::fmt;
