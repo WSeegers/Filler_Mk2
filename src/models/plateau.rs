@@ -9,7 +9,7 @@ const PLAYER2: char = 'X';
 const EMPTY: char = '.';
 
 #[derive(Debug, Clone, PartialEq)]
-enum Cell {
+pub enum Cell {
     Player1,
     Player2,
     Empty,
@@ -24,7 +24,7 @@ pub enum Player {
 pub struct Plateau {
     pub width: u32,
     pub height: u32,
-    cells: Vec<Cell>,
+    pub cells: Vec<Cell>,
 }
 
 impl Plateau {
