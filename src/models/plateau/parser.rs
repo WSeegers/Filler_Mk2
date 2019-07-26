@@ -10,7 +10,7 @@ impl TryFrom<String> for Plateau {
 		}
 		let width = match map.find(|c| c == '\n') {
 			Some(w) => w,
-			none => map.len(),
+			None => map.len(),
 		};
 
 		let mut height = 0;
