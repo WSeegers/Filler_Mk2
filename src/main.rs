@@ -8,8 +8,8 @@ use models::{PieceBag, Plateau, Point};
 mod engine;
 
 use engine::{
-    player_manager::{Manager, Winner},
     player_com::PlayerCom,
+    player_manager::{Manager, Winner},
 };
 
 fn validate_player_path(path: String) -> Result<(), String> {
@@ -62,7 +62,7 @@ fn main() {
     }
 
     let player1_start = Point { x: 4, y: 4 };
-    let player2_start = Point { x: 45, y: 45 };
+    let player2_start = Point { x: 44, y: 44 };
 
     let plat = match Plateau::new(50, 50, &player1_start, &player2_start) {
         Ok(plat) => plat,
