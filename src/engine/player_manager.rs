@@ -1,6 +1,5 @@
-use std::fmt;
-
 use crate::models::{piece, plateau, point};
+use std::convert::TryFrom;
 
 use piece::{Piece, PieceBag};
 use plateau::{Plateau, Player};
@@ -8,7 +7,7 @@ use point::Point;
 
 use super::player_com::{ComError, PlayerCom, PlayerError};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Winner {
     Player1,
     Player2,
@@ -51,7 +50,7 @@ impl Manager {
         self.player_com.p1_send(msg)?;
         let received = self.player_com.p1_receive()?;
 
-        let placement = match Manager::coordinates_from_string(&received) {
+        let placement = match Point::try_from(&received) {
             Ok(point) => point,
             Err(msg) => return Err(PlayerError::new(Player::Player1, msg)),
         };
@@ -78,7 +77,7 @@ impl Manager {
         self.player_com.p2_send(msg)?;
         let received = self.player_com.p2_receive()?;
 
-        let placement = match Manager::coordinates_from_string(&received) {
+        let placement = match Point::try_from(&received) {
             Ok(point) => point,
             Err(msg) => return Err(PlayerError::new(Player::Player2, msg)),
         };
@@ -127,30 +126,6 @@ impl Manager {
 
 /* Helper functions */
 impl Manager {
-    fn coordinates_from_string(input: &String) -> Result<Point, String> {
-        let coordinates = input.trim().split(" ");
-        let vec = coordinates.collect::<Vec<&str>>();
-
-        let cy = match vec.get(0) {
-            Some(s) => s,
-            None => return Err(format!("Bad input: {}", input)),
-        };
-        let cx = match vec.get(1) {
-            Some(s) => s,
-            None => return Err(format!("Bad input: {}", input)),
-        };
-        let x = match cx.parse::<i32>() {
-            Ok(i) => i,
-            Err(_) => return Err(format!("Invalid x coordinate: {}", input)),
-        };
-        let y = match cy.parse::<i32>() {
-            Ok(i) => i,
-            Err(_) => return Err(format!("Invalid y coordinate: {}", input)),
-        };
-
-        Ok(Point { x, y })
-    }
-
     fn set_next_piece(&mut self) {
         self.current_piece = Some(self.piece_bag.next());
     }
