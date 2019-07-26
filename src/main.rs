@@ -5,31 +5,66 @@ use piece::PieceBag;
 use plateau::{Plateau, Player};
 use point::Point;
 
+mod player_com;
+use player_com::PlayerCom;
+
+mod manager;
+use manager::{Manager, Winner};
+
+use std::{thread, time};
+
 fn main() {
     let player1_start = Point { x: 4, y: 4 };
-    let player2_start = Point { x: 15, y: 15 };
+    let player2_start = Point { x: 45, y: 45 };
 
-    let mut p = match Plateau::new(30, 30, &player1_start, &player2_start) {
+    let plat = match Plateau::new(50, 50, &player1_start, &player2_start) {
         Ok(plat) => plat,
         Err(msg) => panic!(msg),
     };
 
-    let pb = PieceBag::new([10, 11], [10, 11]);
+    let p_bag = PieceBag::new([5, 7], [5, 7]);
 
-    let piece_1 = pb.next();
-    let piece_2 = pb.next();
+    let p_com = match PlayerCom::new(
+        String::from("./resources/players/gsteyn.filler"),
+        String::from("./resources/players/gsteyn.filler"),
+        2,
+    ) {
+        Ok(manager) => manager,
+        Err(e) => panic!("{}", e),
+    };
 
-    match p.place_piece(&piece_1, &Point { x: -1, y: 0 }, Player::Player1) {
-        Err(msg) => println!("Player1: {}", msg),
-        Ok(_) => (),
+    let mut steve = Manager::new(plat, p_bag, p_com);
+
+    loop {
+        match steve.p1_move() {
+            Ok(_) => (),
+            Err(e) => {
+                println!("{}", e);
+                break;
+            }
+        }
+        print!("{}", steve.get_plateau());
+        print!("{}", steve.get_current_piece().as_ref().unwrap());
+        print!("<got (O): {}", steve.get_p1_last_move().as_ref().unwrap());
+        match steve.p2_move() {
+            Ok(_) => (),
+            Err(e) => {
+                println!("{}", e);
+                break;
+            }
+        }
+        print!("{}", steve.get_plateau());
+        print!("{}", steve.get_current_piece().as_ref().unwrap());
+        println!("<got (X): {}", steve.get_p2_last_move().as_ref().unwrap());
     }
 
-    match p.place_piece(&piece_2, &Point { x: 10, y: 10 }, Player::Player2) {
-        Err(msg) => println!("Player2: {}", msg),
-        Ok(_) => (),
-    }
+    let (p1_mc, p2_mc) = steve.get_move_counts();
 
-    print!("{}", p);
-    print!("{}", piece_1);
-    print!("{}", piece_2);
+    if p1_mc > p2_mc {
+        println!("Player1 has won");
+    } else if p2_mc > p1_mc {
+        println!("Player2 has won");
+    } else {
+        println!("It was a draw!");
+    }
 }
