@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::models::{piece, plateau, point};
 
 use piece::{Piece, PieceBag};
@@ -5,8 +7,6 @@ use plateau::{Plateau, Player};
 use point::Point;
 
 use super::player_com::{ComError, PlayerCom, PlayerError};
-
-use std::fmt;
 
 #[derive(PartialEq)]
 pub enum Winner {

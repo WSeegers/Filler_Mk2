@@ -151,6 +151,7 @@ impl fmt::Display for Cell {
 impl fmt::Display for Plateau {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Plateau {} {}:", self.height, self.width)?;
+        write!(f, "    ")?;
         for y in 0..(self.width) {
             write!(f, "{}", y % 10)?;
         }
