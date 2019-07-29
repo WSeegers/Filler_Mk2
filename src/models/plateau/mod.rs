@@ -1,9 +1,7 @@
 mod parser;
 
-use super::{piece, point};
+use super::{Piece, Point, Player};
 
-use piece::Piece;
-use point::Point;
 use std::fmt;
 
 const PLAYER1: char = 'O';
@@ -15,11 +13,6 @@ enum Cell {
     Player1,
     Player2,
     Empty,
-}
-
-pub enum Player {
-    Player1,
-    Player2,
 }
 
 #[derive(Debug)]
