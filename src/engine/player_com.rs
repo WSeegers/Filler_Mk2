@@ -2,11 +2,11 @@ use std::fmt;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
+use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 
-use super::plateau::Player;
+use crate::models::plateau::Player;
 
 pub struct PlayerError {
     player: Player,
@@ -29,21 +29,7 @@ impl fmt::Display for PlayerError {
     }
 }
 
-pub struct ComError {
-    msg: String,
-}
-
-impl ComError {
-    pub fn new(msg: String) -> Self {
-        Self { msg }
-    }
-}
-
-impl fmt::Display for ComError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.msg)
-    }
-}
+pub type ComError = String;
 
 pub struct PlayerCom {
     player1_sender: Sender<std::string::String>,
@@ -55,8 +41,8 @@ pub struct PlayerCom {
 
 impl PlayerCom {
     pub fn new(path1: String, path2: String, timeout: u64) -> Result<PlayerCom, ComError> {
-        let (p1_sender, p1_receiver) = PlayerCom::spawn_child_process(path1, Player::Player1)?;
-        let (p2_sender, p2_receiver) = PlayerCom::spawn_child_process(path2, Player::Player2)?;
+        let (p1_sender, p1_receiver) = PlayerCom::spawn_player(path1, Player::Player1)?;
+        let (p2_sender, p2_receiver) = PlayerCom::spawn_player(path2, Player::Player2)?;
 
         Ok(PlayerCom {
             player1_sender: p1_sender,
@@ -110,7 +96,7 @@ impl PlayerCom {
 
 /* Helper functions */
 impl PlayerCom {
-    fn spawn_child_process(
+    fn spawn_player(
         path: String,
         player_num: Player,
     ) -> Result<(Sender<std::string::String>, Receiver<std::string::String>), ComError> {
