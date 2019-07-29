@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+pub use std::convert::TryFrom;
 use std::ops::Add;
 
 #[derive(Debug, Clone)]

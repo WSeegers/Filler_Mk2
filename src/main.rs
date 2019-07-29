@@ -6,11 +6,10 @@ mod models;
 use models::{PieceBag, Plateau, Point};
 
 mod engine;
+use engine::Engine;
 
-use engine::{
-    player_com::PlayerCom,
-    player_manager::{Manager, Winner},
-};
+/// Number of errors that may occure in a row before game ends
+const ERROR_THRESHOLD: u8 = 6;
 
 fn validate_player_path(path: String) -> Result<(), String> {
     let path = path::Path::new(&path);
@@ -71,34 +70,47 @@ fn main() {
 
     let p_bag = PieceBag::new([5, 7], [5, 7]);
 
-    let p_com = match PlayerCom::new(String::from(players[0]), String::from(players[1]), 2) {
-        Ok(manager) => manager,
-        Err(e) => panic!("{}", e),
-    };
+    let mut steve = Engine::new(
+        plat,
+        p_bag,
+        String::from(players[0]),
+        Some(String::from(players[1])),
+        2,
+    )
+    .unwrap();
 
-    let mut steve = Manager::new(plat, p_bag, p_com);
-
+    let mut errors: u8 = 0;
     loop {
-        match steve.p1_move() {
-            Ok(_) => (),
+        match steve.next_move() {
+            Ok(_) => {
+                errors = 0;
+                ()
+            }
             Err(e) => {
                 println!("{}", e);
-                break;
+                errors += 1;
             }
         }
         print!("{}", steve.get_plateau());
         print!("{}", steve.get_current_piece().as_ref().unwrap());
         print!("<got (O): {}", steve.get_p1_last_move().as_ref().unwrap());
-        match steve.p2_move() {
-            Ok(_) => (),
+        match steve.next_move() {
+            Ok(_) => {
+                errors = 0;
+                ()
+            }
             Err(e) => {
                 println!("{}", e);
-                break;
+                errors += 1;
             }
         }
         print!("{}", steve.get_plateau());
         print!("{}", steve.get_current_piece().as_ref().unwrap());
         println!("<got (X): {}", steve.get_p2_last_move().as_ref().unwrap());
+        match errors {
+            e if e >= ERROR_THRESHOLD => break,
+            _ => (),
+        }
     }
 
     let (p1_mc, p2_mc) = steve.get_move_counts();

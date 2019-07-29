@@ -1,6 +1,6 @@
 mod parser;
 
-use super::{Piece, Point, Player};
+use super::{Piece, Player, Point};
 
 use std::fmt;
 
