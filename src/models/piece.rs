@@ -6,7 +6,7 @@ use std::fmt;
 const EMPTY: char = '.';
 const OCCUPIED: char = '*';
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Piece {
     pub width: u32,
     pub height: u32,

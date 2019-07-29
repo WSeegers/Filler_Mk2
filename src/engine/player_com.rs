@@ -1,4 +1,3 @@
-use std::fmt;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
@@ -6,55 +5,30 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 
-use crate::models::plateau::Player;
-
-pub struct PlayerError {
-    player: Player,
-    msg: String,
-}
-
-impl PlayerError {
-    pub fn new(player: Player, msg: String) -> Self {
-        Self { player, msg }
-    }
-}
-
-impl fmt::Display for PlayerError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let num = match self.player {
-            Player::Player1 => 1,
-            Player::Player2 => 2,
-        };
-        write!(f, "Player {} - Error: {}", num, self.msg)
-    }
-}
+use super::player_error::PlayerError;
+use crate::models::Player;
 
 pub type ComError = String;
 
 pub struct PlayerCom {
-    player1_sender: Sender<std::string::String>,
-    player1_receiver: Receiver<std::string::String>,
-    player2_sender: Sender<std::string::String>,
-    player2_receiver: Receiver<std::string::String>,
+    sender: Sender<std::string::String>,
+    receiver: Receiver<std::string::String>,
     timeout: u64,
 }
 
 impl PlayerCom {
-    pub fn new(path1: String, path2: String, timeout: u64) -> Result<PlayerCom, ComError> {
-        let (p1_sender, p1_receiver) = PlayerCom::spawn_player(path1, Player::Player1)?;
-        let (p2_sender, p2_receiver) = PlayerCom::spawn_player(path2, Player::Player2)?;
+    pub fn new(path1: String, timeout: u64, player: Player) -> Result<PlayerCom, ComError> {
+        let (sender, receiver) = PlayerCom::spawn_player(path1, player)?;
 
         Ok(PlayerCom {
-            player1_sender: p1_sender,
-            player1_receiver: p1_receiver,
-            player2_sender: p2_sender,
-            player2_receiver: p2_receiver,
+            sender,
+            receiver,
             timeout,
         })
     }
 
-    pub fn p1_send(&self, message: String) -> Result<(), PlayerError> {
-        match self.player1_sender.send(message) {
+    pub fn send(&self, message: String) -> Result<(), PlayerError> {
+        match self.sender.send(message) {
             Ok(_) => Ok(()),
             Err(_) => Err(PlayerError::new(
                 Player::Player1,
@@ -63,19 +37,9 @@ impl PlayerCom {
         }
     }
 
-    pub fn p2_send(&self, message: String) -> Result<(), PlayerError> {
-        match self.player2_sender.send(message) {
-            Ok(_) => Ok(()),
-            Err(_) => Err(PlayerError::new(
-                Player::Player2,
-                String::from("Error while sending message"),
-            )),
-        }
-    }
-
-    pub fn p1_receive(&self) -> Result<String, PlayerError> {
+    pub fn receive(&self) -> Result<String, PlayerError> {
         let s = self
-            .player1_receiver
+            .receiver
             .recv_timeout(Duration::from_secs(self.timeout));
         match s {
             Ok(s) => Ok(s),
@@ -83,19 +47,6 @@ impl PlayerCom {
         }
     }
 
-    pub fn p2_receive(&self) -> Result<String, PlayerError> {
-        let s = self
-            .player2_receiver
-            .recv_timeout(Duration::from_secs(self.timeout));
-        match s {
-            Ok(s) => Ok(s),
-            Err(_) => Err(PlayerError::new(Player::Player2, String::from("Timed out"))),
-        }
-    }
-}
-
-/* Helper functions */
-impl PlayerCom {
     fn spawn_player(
         path: String,
         player_num: Player,
