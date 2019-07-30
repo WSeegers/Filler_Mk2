@@ -43,4 +43,11 @@ impl Engine {
 	pub fn get_plateau(&self) -> &Plateau {
 		&self.plateau
 	}
+
+	pub fn placement_counts(&self) -> Vec<(Player, u32)> {
+		self.players
+			.iter()
+			.map(|player_com| (player_com.player, player_com.placement_count()))
+			.collect()
+	}
 }

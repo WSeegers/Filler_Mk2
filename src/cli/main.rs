@@ -66,12 +66,8 @@ fn main() {
 	let p_bag = PieceBag::new([5, 7], [5, 7]);
 
 	let player1 = String::from(players[0]);
-	// let mut is_two_player = false;
 	let player2 = match players.get(1) {
-		Some(&player) => {
-			// is_two_player = true;
-			Some(String::from(player))
-		}
+		Some(&player) => Some(String::from(player)),
 		None => None,
 	};
 
@@ -101,17 +97,9 @@ fn main() {
 		}
 	}
 
-	// let (p1_mc, p2_mc) = steve.get_move_counts();
-
-	// println!("Player1 -> {}", p1_mc);
-	// if is_two_player {
-	// 	println!("Player2 -> {}", p2_mc);
-	// 	if p1_mc > p2_mc {
-	// 		println!("Player1 has won");
-	// 	} else if p2_mc > p1_mc {
-	// 		println!("Player2 has won");
-	// 	} else {
-	// 		println!("It was a draw!");
-	// 	}
-	// }
+	let placements = steve.placement_counts();
+	println!("Final Score: ");
+	for (player, count) in placements {
+		println!("<{}> -> {}", player, count);
+	}
 }

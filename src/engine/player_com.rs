@@ -135,4 +135,8 @@ impl PlayerCom {
 
         Ok((sender, receiver))
     }
+
+    pub fn placement_count(&self) -> u32 {
+        self.placement_count
+    }
 }
