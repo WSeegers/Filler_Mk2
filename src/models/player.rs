@@ -1,7 +1,7 @@
 use super::constants::*;
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum Player {
     Player1,
     Player2,
