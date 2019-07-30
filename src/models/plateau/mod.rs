@@ -6,11 +6,39 @@ use constants::*;
 
 use std::fmt;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone)]
 enum Cell {
     Player1(bool),
     Player2(bool),
     Empty,
+}
+
+impl PartialEq for Cell {
+    fn eq(&self, other: &Self) -> bool {
+        use Cell::*;
+        match self {
+            Player1(_) => match other {
+                Player1(_) => true,
+                _ => false,
+            },
+            Player2(_) => match other {
+                Player2(_) => true,
+                _ => false,
+            },
+            _ => self == other,
+        }
+    }
+}
+
+impl Cell {
+    fn age(&self) -> Self {
+        use Cell::*;
+        match self {
+            Player1(_) => Player1(false),
+            Player2(_) => Player2(false),
+            Empty => Empty,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -18,6 +46,7 @@ pub struct Plateau {
     pub width: u32,
     pub height: u32,
     cells: Vec<Cell>,
+    last_piece: Option<(Point, Piece)>,
 }
 
 impl Plateau {
@@ -31,6 +60,7 @@ impl Plateau {
             width,
             height,
             cells: vec![Cell::Empty; (width * height) as usize],
+            last_piece: None,
         };
 
         match plateau.is_in_bounds(player1) {
@@ -106,9 +136,10 @@ impl Plateau {
         placement: &Point,
         player: Player,
     ) -> Result<(), String> {
+        self.age_placement();
         let owner = match player {
-            Player::Player1 => Cell::Player1(false),
-            Player::Player2 => Cell::Player2(false),
+            Player::Player1 => Cell::Player1(true),
+            Player::Player2 => Cell::Player2(true),
         };
 
         self.is_valid_placement(piece, placement, &owner)?;
@@ -120,11 +151,27 @@ impl Plateau {
                 }
 
                 let offset = &Point { x, y } + &placement;
-                self.set(&offset, owner.clone());
+                self.set(&offset, owner);
             }
         }
+        self.last_piece = Some((*placement, piece.clone()));
 
         Ok(())
+    }
+
+    fn age_placement(&mut self) {
+        if let Some((placement, piece)) = self.last_piece.take() {
+            for y in 0..(piece.height) as i32 {
+                for x in 0..(piece.width) as i32 {
+                    if !piece.get(Point { x, y }) {
+                        continue;
+                    }
+                    let offset = &Point { x, y } + &placement;
+                    let owner = self.get(&offset);
+                    self.set(&offset, owner.age());
+                }
+            }
+        }
     }
 }
 

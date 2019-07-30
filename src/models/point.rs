@@ -1,7 +1,7 @@
 pub use std::convert::TryFrom;
 use std::ops::Add;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Point {
     pub x: i32,
     pub y: i32,

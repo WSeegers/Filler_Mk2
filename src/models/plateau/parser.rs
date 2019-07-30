@@ -37,6 +37,7 @@ impl TryFrom<String> for Plateau {
             width: width as u32,
             height,
             cells,
+            last_piece: None,
         };
 
         Ok(p)
