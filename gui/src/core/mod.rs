@@ -1,5 +1,4 @@
-mod eventloop;
-mod screens;
+pub mod eventloop;
 
 use conrod;
 use conrod::backend::glium::glium;
@@ -9,7 +8,7 @@ use eventloop::EventLoop;
 use ttf_noto_sans;
 use std::path::Path;
 
-use screens::Home;
+use crate::screens::Home;
 use conrod::Widget;
 
 static TITLE: &str = "filler_mk2";
@@ -36,7 +35,7 @@ pub fn main_loop() {
     let mut ui = conrod::UiBuilder::new([INITIAL_WINDOW_WIDTH as f64, INITIAL_WINDOW_HEIGHT as f64]).build();
 
     // Add a `Font` to the `Ui`'s `font::Map` from file.
-    let font_path = Path::new("src/gui/assets/fonts/blocks.ttf");
+    let font_path = Path::new("assets/fonts/blocks.ttf");
     ui.fonts.insert_from_file(font_path).unwrap();
     // ui.fonts.insert(conrod::text::FontCollection::from_bytes(ttf_noto_sans::REGULAR).unwrap().into_font().unwrap());
 

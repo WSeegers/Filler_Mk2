@@ -5,9 +5,9 @@ extern crate conrod_derive;
 extern crate ttf_noto_sans;
 extern crate find_folder;
 
-mod gui;
-use gui::main_loop;
+mod core;
+mod screens;
 
 fn main() {
-    gui::main_loop();
+    core::main_loop();
 }
