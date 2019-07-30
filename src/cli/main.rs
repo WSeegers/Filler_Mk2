@@ -50,7 +50,7 @@ fn main() {
 
 	let players: Vec<&str> = args
 		.values_of("player")
-		.expect("Clap Filed error handling of players")
+		.expect("Clap failed at handling of players")
 		.collect();
 
 	// Section needs to handling input of map -----
