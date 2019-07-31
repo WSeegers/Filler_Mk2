@@ -21,7 +21,6 @@ widget_ids!(struct Ids {
 });
 
 pub fn main_loop() {
-    // Build the window.
     let mut events_loop = glium::glutin::EventsLoop::new();
     let window = glium::glutin::WindowBuilder::new()
         .with_title(TITLE)
@@ -31,7 +30,6 @@ pub fn main_loop() {
         .with_multisampling(4);
     let display = glium::Display::new(window, context, &events_loop).unwrap();
 
-    // construct our `Ui`.
     let mut ui = conrod::UiBuilder::new([INITIAL_WINDOW_WIDTH as f64, INITIAL_WINDOW_HEIGHT as f64]).build();
 
     // Add a `Font` to the `Ui`'s `font::Map` from file.
@@ -39,8 +37,6 @@ pub fn main_loop() {
     ui.fonts.insert_from_file(font_path).unwrap();
     // ui.fonts.insert(conrod::text::FontCollection::from_bytes(ttf_noto_sans::REGULAR).unwrap().into_font().unwrap());
 
-    // A type used for converting `conrod::render::Primitives` into `Command`s that can be used
-    // for drawing to the glium `Surface`.
     let mut renderer = conrod::backend::glium::Renderer::new(&display).unwrap();
 
     // The image map describing each of our widget->image mappings (in our case, none).
@@ -51,9 +47,7 @@ pub fn main_loop() {
     // Poll events from the window.
     let mut event_loop = EventLoop::new();
     'main: loop {
-        // Handle all events.
         for event in event_loop.next(&mut events_loop) {
-            // Use the `winit` backend feature to convert the winit event to a conrod one.
             if let Some(event) = conrod::backend::winit::convert_event(event.clone(), &display) {
                 ui.handle_event(event);
                 event_loop.needs_update();
