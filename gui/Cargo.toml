@@ -12,3 +12,4 @@ conrod = { version = "0.61.1", features = ["winit", "glium"] }
 conrod_derive = "0.1.2"
 ttf-noto-sans = "0.1.1"
 find_folder = "0.3.0"
+nfd = { git = "https://github.com/saurvs/nfd-rs.git" }

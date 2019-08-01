@@ -8,7 +8,7 @@ use eventloop::EventLoop;
 use ttf_noto_sans;
 use std::path::Path;
 
-use crate::screens::Home;
+use crate::screens::{ Home, PlayerSelect };
 use conrod::Widget;
 
 static TITLE: &str = "filler_mk2";
@@ -73,7 +73,7 @@ pub fn main_loop() {
 
         // Instantiate all widgets in the GUI.
         {
-            Home::new()
+            PlayerSelect::new()
                 .set(app_id, &mut ui.set_widgets())
         }
 
