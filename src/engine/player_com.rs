@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
@@ -5,12 +6,14 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 
-use super::player_error::PlayerError;
-use crate::models::Player;
+use super::{PlayerError, PlayerResponse};
+use crate::models::{Piece, Plateau, Player, Point};
 
 pub type ComError = String;
 
 pub struct PlayerCom {
+    pub player: Player,
+    placement_count: u32,
     sender: Sender<std::string::String>,
     receiver: Receiver<std::string::String>,
     timeout: u64,
@@ -21,13 +24,44 @@ impl PlayerCom {
         let (sender, receiver) = PlayerCom::spawn_player(path1, player)?;
 
         Ok(PlayerCom {
+            player,
             sender,
             receiver,
             timeout,
+            placement_count: 0,
         })
     }
 
-    pub fn send(&self, message: String) -> Result<(), PlayerError> {
+    pub fn request_placement(
+        &mut self,
+        plateau: &mut Plateau,
+        piece: &Piece,
+    ) -> Result<PlayerResponse, PlayerError> {
+        let msg = format!("{}{}", plateau, piece);
+        self.send(msg)?;
+        let received = self.receive()?;
+
+        let placement = match Point::try_from(&received) {
+            Ok(point) => point,
+            Err(msg) => return Err(PlayerError::new(self.player, msg)),
+        };
+
+        match plateau.place_piece(piece, &placement, self.player) {
+            Ok(_) => (),
+            Err(msg) => return Err(PlayerError::new(self.player, msg)),
+        };
+
+        self.placement_count += 1;
+
+        Ok(PlayerResponse {
+            player: self.player,
+            piece: piece.clone(),
+            raw_response: String::from(received),
+            placement_count: self.placement_count,
+        })
+    }
+
+    fn send(&self, message: String) -> Result<(), PlayerError> {
         match self.sender.send(message) {
             Ok(_) => Ok(()),
             Err(_) => Err(PlayerError::new(
@@ -37,7 +71,7 @@ impl PlayerCom {
         }
     }
 
-    pub fn receive(&self) -> Result<String, PlayerError> {
+    fn receive(&self) -> Result<String, PlayerError> {
         let s = self
             .receiver
             .recv_timeout(Duration::from_secs(self.timeout));
@@ -100,5 +134,9 @@ impl PlayerCom {
         });
 
         Ok((sender, receiver))
+    }
+
+    pub fn placement_count(&self) -> u32 {
+        self.placement_count
     }
 }

@@ -1,12 +1,10 @@
 mod parser;
 
-use super::{Piece, Player, Point};
+use super::{constants, Piece, Player, Point};
+
+use constants::*;
 
 use std::fmt;
-
-const PLAYER1: char = 'O';
-const PLAYER2: char = 'X';
-const EMPTY: char = '.';
 
 #[derive(Debug, Clone, PartialEq)]
 enum Cell {
