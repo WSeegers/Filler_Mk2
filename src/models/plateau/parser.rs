@@ -23,8 +23,8 @@ impl TryFrom<String> for Plateau {
             for (x, c) in row.chars().enumerate() {
                 use Cell::*;
                 let cell = match c {
-                    PLAYER1 => Player1,
-                    PLAYER2 => Player2,
+                    PLAYER1 => Player1(false),
+                    PLAYER2 => Player2(false),
                     EMPTY => Empty,
                     _ => return Err(format!("Unknown cell '{}' found at [{}, {}]", c, x, y)),
                 };
@@ -37,6 +37,7 @@ impl TryFrom<String> for Plateau {
             width: width as u32,
             height,
             cells,
+            last_piece: None,
         };
 
         Ok(p)
@@ -51,7 +52,7 @@ mod tests {
     fn plateau_from_string_1() {
         use Cell::*;
 
-        let cell_map = vec![Player1, Empty, Empty, Player2];
+        let cell_map = vec![Player1(false), Empty, Empty, Player2(false)];
         let string_map = String::from("O.\n.X\n");
 
         let plat = Plateau::try_from(string_map).unwrap();
@@ -70,7 +71,14 @@ mod tests {
     fn plateau_from_string_2() {
         use Cell::*;
 
-        let cell_map = vec![Player1, Player2, Empty, Player2, Player1, Empty];
+        let cell_map = vec![
+            Player1(false),
+            Player2(false),
+            Empty,
+            Player2(false),
+            Player1(false),
+            Empty,
+        ];
         let string_map = String::from("OX.\nXO.\n");
 
         let plat = Plateau::try_from(string_map).unwrap();
