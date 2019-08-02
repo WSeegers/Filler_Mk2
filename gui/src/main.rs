@@ -10,7 +10,8 @@ extern crate nfd;
 mod core;
 mod screens;
 
+use crate::core::renderer;
 
 fn main() {
-    core::main_loop();
+    renderer::main_loop();
 }

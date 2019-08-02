@@ -14,19 +14,21 @@ pub struct State {
 }
 
 #[derive(WidgetCommon)]
-pub struct Home {
+pub struct Home<'a> {
     #[conrod(common_builder)] common: widget::CommonBuilder,
+    outside: &'a mut u32,
 }
 
-impl Home {
-    pub fn new() -> Self {
+impl<'a> Home<'a> {
+    pub fn new(outside: &'a mut u32) -> Self {
         Self {
             common: widget::CommonBuilder::default(),
+            outside
         }
     }
 }
 
-impl Widget for Home {
+impl<'a> Widget for Home<'a> {
     type State = State;
     type Style = ();
     type Event = ();
@@ -73,6 +75,7 @@ impl Widget for Home {
             .set(state.ids.btn_single, ui)
         {
             state.update(|state| state.clicks += 1);
+            *self.outside = 2;
         }
 
         for _click in widget::Button::new()
