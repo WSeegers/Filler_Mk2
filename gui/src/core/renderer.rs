@@ -9,6 +9,8 @@ use std::path::Path;
 use crate::screens::{ Home, PlayerSelect };
 use conrod::Widget;
 
+use super::Screen;
+
 static TITLE: &str = "filler_mk2";
 
 const INITIAL_WINDOW_WIDTH: u32 = 800;
@@ -43,7 +45,7 @@ pub fn main_loop() {
 
     let home_id = Ids::new(ui.widget_id_generator()).home;
     let player_select_id = Ids::new(ui.widget_id_generator()).player_select;
-    let mut outside = 1;
+    let mut screen = Screen::Home;
 
     // Poll events from the window.
     let mut event_loop = EventLoop::new();
@@ -74,16 +76,16 @@ pub fn main_loop() {
 
         // Instantiate all widgets in the GUI.
         {
-            match outside {
-                1 => {
-                    Home::new(&mut outside)
+            match screen {
+                Screen::Home => {
+                    Home::new(&mut screen)
                     .set(home_id, &mut ui.set_widgets());
-                    println!("Widget 1");
                 },
-                2 => {
+                Screen::PSelect => {
                     PlayerSelect::new().set(player_select_id, &mut ui.set_widgets());
                 },
-                _ => Home::new(&mut outside).set(home_id, &mut ui.set_widgets())
+                Screen::Exit => break 'main,
+                _ => Home::new(&mut screen).set(home_id, &mut ui.set_widgets())
             }
         }
 

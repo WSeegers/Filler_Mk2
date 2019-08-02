@@ -1,5 +1,7 @@
 use conrod::{widget, Widget, Labelable, Positionable, Sizeable, color, Colorable, Borderable};
 
+use crate::core::Screen;
+
 widget_ids!(struct Ids {
     canvas,
     title,
@@ -10,20 +12,19 @@ widget_ids!(struct Ids {
 
 pub struct State {
     ids: Ids,
-    clicks: usize,
 }
 
 #[derive(WidgetCommon)]
 pub struct Home<'a> {
     #[conrod(common_builder)] common: widget::CommonBuilder,
-    outside: &'a mut u32,
+    screen: &'a mut Screen,
 }
 
 impl<'a> Home<'a> {
-    pub fn new(outside: &'a mut u32) -> Self {
+    pub fn new(screen: &'a mut Screen) -> Self {
         Self {
             common: widget::CommonBuilder::default(),
-            outside
+            screen
         }
     }
 }
@@ -36,7 +37,6 @@ impl<'a> Widget for Home<'a> {
     fn init_state(&self, id_gen: widget::id::Generator) -> Self::State {
         State {
             ids: Ids::new(id_gen),
-            clicks: 0,
         }
     }
 
@@ -74,8 +74,7 @@ impl<'a> Widget for Home<'a> {
             .label("Single Game")
             .set(state.ids.btn_single, ui)
         {
-            state.update(|state| state.clicks += 1);
-            *self.outside = 2;
+            *self.screen = Screen::PSelect;
         }
 
         for _click in widget::Button::new()
@@ -84,7 +83,7 @@ impl<'a> Widget for Home<'a> {
             .label("Tournament")
             .set(state.ids.btn_tournament, ui)
         {
-            state.update(|state| state.clicks += 1);
+            *self.screen = Screen::Tournament;
         }
 
         for _click in widget::Button::new()
@@ -93,7 +92,7 @@ impl<'a> Widget for Home<'a> {
             .label("Exit")
             .set(state.ids.btn_exit, ui)
         {
-            state.update(|state| state.clicks += 1);
+            *self.screen = Screen::Exit;
         }
     }
 }
