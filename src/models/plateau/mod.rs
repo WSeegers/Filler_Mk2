@@ -1,18 +1,44 @@
 mod parser;
 
-use super::{Piece, Player, Point};
+use super::{constants, Piece, Player, Point};
+
+use constants::*;
 
 use std::fmt;
 
-const PLAYER1: char = 'O';
-const PLAYER2: char = 'X';
-const EMPTY: char = '.';
-
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone)]
 enum Cell {
-    Player1,
-    Player2,
+    Player1(bool),
+    Player2(bool),
     Empty,
+}
+
+impl PartialEq for Cell {
+    fn eq(&self, other: &Self) -> bool {
+        use Cell::*;
+        match self {
+            Player1(_) => match other {
+                Player1(_) => true,
+                _ => false,
+            },
+            Player2(_) => match other {
+                Player2(_) => true,
+                _ => false,
+            },
+            _ => self == other,
+        }
+    }
+}
+
+impl Cell {
+    fn age(&self) -> Self {
+        use Cell::*;
+        match self {
+            Player1(_) => Player1(false),
+            Player2(_) => Player2(false),
+            Empty => Empty,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -20,6 +46,7 @@ pub struct Plateau {
     pub width: u32,
     pub height: u32,
     cells: Vec<Cell>,
+    last_piece: Option<(Point, Piece)>,
 }
 
 impl Plateau {
@@ -33,15 +60,16 @@ impl Plateau {
             width,
             height,
             cells: vec![Cell::Empty; (width * height) as usize],
+            last_piece: None,
         };
 
         match plateau.is_in_bounds(player1) {
-            true => plateau.set(player1, Cell::Player1),
+            true => plateau.set(player1, Cell::Player1(false)),
             false => return Err(String::from("Player1 out of bounds")),
         };
 
         match plateau.is_in_bounds(player2) {
-            true => plateau.set(player2, Cell::Player2),
+            true => plateau.set(player2, Cell::Player2(false)),
             false => return Err(String::from("Player2 out of bounds")),
         };
 
@@ -86,11 +114,11 @@ impl Plateau {
                 let plat_cell = self.get(&offset);
                 match plat_cell {
                     Empty => continue,
-                    Player1 | Player2 if plat_cell == *owner => match overlap {
+                    Player1(_) | Player2(_) if plat_cell == *owner => match overlap {
                         true => return Err(String::from("Overlap greater than one")),
                         false => overlap = true,
                     },
-                    Player1 | Player2 => return Err(String::from("Overlap on other player")),
+                    Player1(_) | Player2(_) => return Err(String::from("Overlap on other player")),
                 }
             }
         }
@@ -108,9 +136,10 @@ impl Plateau {
         placement: &Point,
         player: Player,
     ) -> Result<(), String> {
+        self.age_placement();
         let owner = match player {
-            Player::Player1 => Cell::Player1,
-            Player::Player2 => Cell::Player2,
+            Player::Player1 => Cell::Player1(true),
+            Player::Player2 => Cell::Player2(true),
         };
 
         self.is_valid_placement(piece, placement, &owner)?;
@@ -122,19 +151,41 @@ impl Plateau {
                 }
 
                 let offset = &Point { x, y } + &placement;
-                self.set(&offset, owner.clone());
+                self.set(&offset, owner);
             }
         }
+        self.last_piece = Some((*placement, piece.clone()));
 
         Ok(())
+    }
+
+    fn age_placement(&mut self) {
+        if let Some((placement, piece)) = self.last_piece.take() {
+            for y in 0..(piece.height) as i32 {
+                for x in 0..(piece.width) as i32 {
+                    if !piece.get(Point { x, y }) {
+                        continue;
+                    }
+                    let offset = &Point { x, y } + &placement;
+                    let owner = self.get(&offset);
+                    self.set(&offset, owner.age());
+                }
+            }
+        }
     }
 }
 
 impl fmt::Display for Cell {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let cell = match self {
-            Cell::Player1 => PLAYER1,
-            Cell::Player2 => PLAYER2,
+            Cell::Player1(is_new) => match *is_new {
+                true => PLAYER1_NEW,
+                false => PLAYER1,
+            },
+            Cell::Player2(is_new) => match *is_new {
+                true => PLAYER2_NEW,
+                false => PLAYER2,
+            },
             Cell::Empty => EMPTY,
         };
         write!(f, "{}", cell)
@@ -200,14 +251,14 @@ mod tests {
         let placement = Point::new(0, 1);
         println!("placement: {:?}", placement);
         assert_eq!(
-            plateau.is_valid_placement(&piece, &placement, &Cell::Player1),
+            plateau.is_valid_placement(&piece, &placement, &Cell::Player1(false)),
             Ok(())
         );
 
         let placement = Point::new(-1, 1);
         println!("Placement: {:?}", placement);
         assert_eq!(
-            plateau.is_valid_placement(&piece, &placement, &Cell::Player1),
+            plateau.is_valid_placement(&piece, &placement, &Cell::Player1(false)),
             Ok(())
         );
     }
@@ -224,14 +275,14 @@ mod tests {
         let placement = Point::new(1, 0);
         println!("placement: {:?}", placement);
         assert_eq!(
-            plateau.is_valid_placement(&piece, &placement, &Cell::Player1),
+            plateau.is_valid_placement(&piece, &placement, &Cell::Player1(false)),
             Ok(())
         );
 
         let placement = Point::new(1, -1);
         println!("Placement: {:?}", placement);
         assert_eq!(
-            plateau.is_valid_placement(&piece, &placement, &Cell::Player1),
+            plateau.is_valid_placement(&piece, &placement, &Cell::Player1(false)),
             Ok(())
         );
     }
@@ -248,7 +299,7 @@ mod tests {
         let placement = Point::new(0, 0);
         println!("placement: {:?}", placement);
         assert_eq!(
-            plateau.is_valid_placement(&piece, &placement, &Cell::Player2),
+            plateau.is_valid_placement(&piece, &placement, &Cell::Player2(false)),
             Ok(())
         );
     }

@@ -9,3 +9,11 @@ edition = "2018"
 [dependencies]
 rand = "0.7"
 clap = "2"
+
+[lib]
+name = "fillercore"
+path = "src/lib.rs"
+
+[[bin]]
+name = "filler_vm-cli"
+path = "src/cli/main.rs"
