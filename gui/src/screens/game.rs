@@ -100,15 +100,23 @@ impl<'a> Game<'a> {
 
         implement_vertex!(Vertex, position);
 
-        let vertex1 = Vertex { position: [-0.5, -0.5] };
-        let vertex2 = Vertex { position: [ 0.0,  0.5] };
-        let vertex3 = Vertex { position: [ 0.5, -0.25] };
-        let shape = vec![vertex1, vertex2, vertex3];
+        let vertex1 = Vertex { position: [-0.5, 0.5] };
+        let vertex2 = Vertex { position: [ 0.5,  0.5] };
+        let vertex3 = Vertex { position: [ 0.5, -0.5] };
+        let vertex4 = Vertex { position: [ -0.5, -0.5] };
+        let shape = vec![vertex1, vertex2, vertex3, vertex4];
 
         let disp = self.display.clone();
         let vertex_buffer = glium::VertexBuffer::new(&disp, &shape).unwrap();
 
-        let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+        let ib_data: Vec<u16> = vec![0, 1, 2, 1, 3, 2];
+        let indices = glium::IndexBuffer::new(
+            &disp,
+            glium::index::PrimitiveType::TrianglesList,
+            &ib_data
+        ).unwrap();
+        // let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+
 
         let vertex_shader_src = r#"
             #version 140
