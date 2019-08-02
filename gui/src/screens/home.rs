@@ -70,7 +70,7 @@ impl<'a> Widget for Home<'a> {
             .label("Single Game")
             .set(state.ids.btn_single, ui)
         {
-            *self.screen = Screen::PSelect;
+            *self.screen = Screen::Game;
         }
 
         for _click in widget::Button::new()

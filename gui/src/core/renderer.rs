@@ -6,7 +6,7 @@ use conrod::backend::glium::glium::Surface;
 use std::path::Path;
 use ttf_noto_sans;
 
-use crate::screens::{Home, PlayerSelect};
+use crate::screens::{Home, PlayerSelect, Game};
 use conrod::Widget;
 
 use super::Screen;
@@ -19,6 +19,7 @@ const INITIAL_WINDOW_HEIGHT: u32 = 500;
 widget_ids!(struct Ids {
     home,
     player_select,
+    game,
 });
 
 pub fn main_loop() {
@@ -29,7 +30,7 @@ pub fn main_loop() {
     let context = glium::glutin::ContextBuilder::new()
         .with_vsync(true)
         .with_multisampling(4);
-    let display = glium::Display::new(window, context, &events_loop).unwrap();
+    let mut display = glium::Display::new(window, context, &events_loop).unwrap();
 
     let mut ui =
         conrod::UiBuilder::new([INITIAL_WINDOW_WIDTH as f64, INITIAL_WINDOW_HEIGHT as f64]).build();
@@ -46,6 +47,7 @@ pub fn main_loop() {
 
     let home_id = Ids::new(ui.widget_id_generator()).home;
     let player_select_id = Ids::new(ui.widget_id_generator()).player_select;
+    let game_id = Ids::new(ui.widget_id_generator()).game;
     let mut screen = Screen::Home;
 
     // Poll events from the window.
@@ -80,6 +82,11 @@ pub fn main_loop() {
             match screen {
                 Screen::Home => Home::new(&mut screen).set(home_id, &mut ui.set_widgets()),
                 Screen::PSelect => PlayerSelect::new().set(player_select_id, &mut ui.set_widgets()),
+                Screen::Game => {
+                    println!("BEFORE GAME");
+                    let mut game = Game::new(&mut display, &mut events_loop, 800, 500, 50, 50);
+                    game.main_loop();
+                },
                 Screen::Exit => break 'main,
                 _ => Home::new(&mut screen).set(home_id, &mut ui.set_widgets()),
             }

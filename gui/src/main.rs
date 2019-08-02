@@ -7,6 +7,8 @@ extern crate ttf_noto_sans;
 
 extern crate nfd;
 
+extern crate fillercore;
+
 mod core;
 mod screens;
 
