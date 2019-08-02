@@ -83,7 +83,6 @@ pub fn main_loop() {
                 Screen::Home => Home::new(&mut screen).set(home_id, &mut ui.set_widgets()),
                 Screen::PSelect => PlayerSelect::new().set(player_select_id, &mut ui.set_widgets()),
                 Screen::Game => {
-                    println!("BEFORE GAME");
                     let mut game = Game::new(&mut display, &mut events_loop, 800, 500, 50, 50);
                     game.main_loop();
                 },

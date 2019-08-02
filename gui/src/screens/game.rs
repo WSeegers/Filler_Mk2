@@ -1,19 +1,3 @@
-use conrod::{color, widget, Borderable, Colorable, Labelable, Positionable, Sizeable, Widget};
-
-extern crate piston;
-extern crate graphics;
-extern crate glutin_window;
-extern crate opengl_graphics;
-
-use piston::window::WindowSettings;
-use piston::event_loop::*;
-use piston::input::*;
-// use glutin_window::GlutinWindow as Window;
-use conrod::backend::glium::glium;
-use conrod::backend::glium::glium::Surface;
-use glium::glutin::Window;
-use opengl_graphics::{GlGraphics, OpenGL};
-
 use fillercore::models::*;
 
 use fillercore::models::piece::{Piece, PieceBag};
@@ -23,18 +7,11 @@ use fillercore::models::point::Point;
 
 use fillercore::engine::Engine;
 
-widget_ids!(struct Ids {
-    canvas,
-});
-
-pub struct State {
-    ids: Ids,
-}
+use glium::{glutin, Surface};
 
 pub struct Game<'a> {
     display: &'a mut conrod::glium::Display,
     events_loop: &'a mut glium::glutin::EventsLoop,
-    events: Events,
     width: u32,
     height: u32,
     board_width: u32,
@@ -43,13 +20,11 @@ pub struct Game<'a> {
 }
 
 impl<'a> Game<'a> {
-    pub fn new(display: &'a mut conrod::glium::Display, events_loop: &'a mut glium::glutin::EventsLoop, width: u32, height: u32, board_width: u32, board_height: u32) -> Self {
-        let mut events = Events::new(EventSettings::new());
+    pub fn new(display: &'a mut conrod::glium::Display, events_loop: &'a mut glutin::EventsLoop, width: u32, height: u32, board_width: u32, board_height: u32) -> Self {
 
         Self {
             display,
             events_loop,
-            events,
             width,
             height,
             board_width,
@@ -117,14 +92,56 @@ impl<'a> Game<'a> {
         // let ERROR_THRESHOLD = 3;
 
         // let mut errors: u8 = 0;
+
+        #[derive(Copy, Clone)]
+        struct Vertex {
+            position: [f32; 2],
+        }
+
+        implement_vertex!(Vertex, position);
+
+        let vertex1 = Vertex { position: [-0.5, -0.5] };
+        let vertex2 = Vertex { position: [ 0.0,  0.5] };
+        let vertex3 = Vertex { position: [ 0.5, -0.25] };
+        let shape = vec![vertex1, vertex2, vertex3];
+
+        let disp = self.display.clone();
+        let vertex_buffer = glium::VertexBuffer::new(&disp, &shape).unwrap();
+
+        let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+
+        let vertex_shader_src = r#"
+            #version 140
+
+            in vec2 position;
+
+            void main() {
+                gl_Position = vec4(position, 0.0, 1.0);
+            }
+        "#;
+
+        let fragment_shader_src = r#"
+            #version 140
+
+            out vec4 color;
+
+            void main() {
+                color = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+        "#;
+
+        let program = glium::Program::from_source(&disp, vertex_shader_src, fragment_shader_src, None).unwrap();
+
         loop {
             use glium::{glutin, Surface};
 
             let mut closed = false;
-            println!("HERE!!!!!!!!!!!!!!");
             while !closed {
                 let mut target = self.display.draw();
                 target.clear_color(0.0, 0.0, 1.0, 1.0);
+
+                target.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms,
+                            &Default::default()).unwrap();
                 target.finish().unwrap();
 
                 self.events_loop.poll_events(|ev| {
@@ -137,28 +154,6 @@ impl<'a> Game<'a> {
                     }
                 });
             }
-            // match steve.next_move() {
-            //     Ok(response) => {
-            //         print!("<got ({}): {}", response.player, response.raw_response);
-            //         print!("{}", response.piece);
-            //         print!("{}", steve.get_plateau());
-            //         errors = 0;
-
-            //         if let Some(e) = self.events.next(&mut self.window) {
-            //             if let Some(r) = e.render_args() {
-            //                 self.render(&r, &plat);
-            //             }
-            //         }
-            //     }
-            //     Err(e) => {
-            //         println!("{}", e);
-            //         errors += 1;
-            //     }
-            // }
-            // match errors {
-            //     e if e >= ERROR_THRESHOLD => break,
-            //     _ => (),
-            // }
         }
     }
 }

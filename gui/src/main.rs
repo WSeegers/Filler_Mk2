@@ -7,6 +7,9 @@ extern crate ttf_noto_sans;
 
 extern crate nfd;
 
+#[macro_use]
+extern crate glium;
+
 extern crate fillercore;
 
 mod core;
