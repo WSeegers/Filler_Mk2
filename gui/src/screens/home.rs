@@ -1,4 +1,4 @@
-use conrod::{widget, Widget, Labelable, Positionable, Sizeable, color, Colorable, Borderable};
+use conrod::{color, widget, Borderable, Colorable, Labelable, Positionable, Sizeable, Widget};
 
 use crate::core::Screen;
 
@@ -16,7 +16,8 @@ pub struct State {
 
 #[derive(WidgetCommon)]
 pub struct Home<'a> {
-    #[conrod(common_builder)] common: widget::CommonBuilder,
+    #[conrod(common_builder)]
+    common: widget::CommonBuilder,
     screen: &'a mut Screen,
 }
 
@@ -24,7 +25,7 @@ impl<'a> Home<'a> {
     pub fn new(screen: &'a mut Screen) -> Self {
         Self {
             common: widget::CommonBuilder::default(),
-            screen
+            screen,
         }
     }
 }
@@ -43,12 +44,7 @@ impl<'a> Widget for Home<'a> {
     fn style(&self) -> Self::Style {}
 
     fn update(self, args: widget::UpdateArgs<Self>) -> Self::Event {
-        let widget::UpdateArgs {
-            state,
-            ui,
-            id,
-            ..
-        } = args;
+        let widget::UpdateArgs { state, ui, id, .. } = args;
 
         // Background
         widget::Canvas::new()

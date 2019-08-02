@@ -1,12 +1,12 @@
+use super::eventloop::EventLoop;
 use conrod;
 use conrod::backend::glium::glium;
 use conrod::backend::glium::glium::Surface;
-use super::eventloop::EventLoop;
 
-use ttf_noto_sans;
 use std::path::Path;
+use ttf_noto_sans;
 
-use crate::screens::{ Home, PlayerSelect };
+use crate::screens::{Home, PlayerSelect};
 use conrod::Widget;
 
 use super::Screen;
@@ -31,7 +31,8 @@ pub fn main_loop() {
         .with_multisampling(4);
     let display = glium::Display::new(window, context, &events_loop).unwrap();
 
-    let mut ui = conrod::UiBuilder::new([INITIAL_WINDOW_WIDTH as f64, INITIAL_WINDOW_HEIGHT as f64]).build();
+    let mut ui =
+        conrod::UiBuilder::new([INITIAL_WINDOW_WIDTH as f64, INITIAL_WINDOW_HEIGHT as f64]).build();
 
     // Add a `Font` to the `Ui`'s `font::Map` from file.
     let font_path = Path::new("src/assets/fonts/blocks.ttf");
@@ -77,15 +78,10 @@ pub fn main_loop() {
         // Instantiate all widgets in the GUI.
         {
             match screen {
-                Screen::Home => {
-                    Home::new(&mut screen)
-                    .set(home_id, &mut ui.set_widgets());
-                },
-                Screen::PSelect => {
-                    PlayerSelect::new().set(player_select_id, &mut ui.set_widgets());
-                },
+                Screen::Home => Home::new(&mut screen).set(home_id, &mut ui.set_widgets()),
+                Screen::PSelect => PlayerSelect::new().set(player_select_id, &mut ui.set_widgets()),
                 Screen::Exit => break 'main,
-                _ => Home::new(&mut screen).set(home_id, &mut ui.set_widgets())
+                _ => Home::new(&mut screen).set(home_id, &mut ui.set_widgets()),
             }
         }
 

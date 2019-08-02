@@ -15,7 +15,10 @@ impl EventLoop {
     }
 
     /// Produce an iterator yielding all available events.
-    pub fn next(&mut self, events_loop: &mut glium::glutin::EventsLoop) -> Vec<glium::glutin::Event> {
+    pub fn next(
+        &mut self,
+        events_loop: &mut glium::glutin::EventsLoop,
+    ) -> Vec<glium::glutin::Event> {
         // We don't want to loop any faster than 60 FPS, so wait until it has been at least 16ms
         // since the last yield.
         let last_update = self.last_update;
@@ -51,5 +54,4 @@ impl EventLoop {
     pub fn needs_update(&mut self) {
         self.ui_needs_update = true;
     }
-
 }
