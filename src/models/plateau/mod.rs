@@ -7,7 +7,7 @@ use constants::*;
 use std::fmt;
 
 #[derive(Debug, Copy, Clone)]
-enum Cell {
+pub enum Cell {
     Player1(bool),
     Player2(bool),
     Empty,
@@ -45,7 +45,7 @@ impl Cell {
 pub struct Plateau {
     pub width: u32,
     pub height: u32,
-    cells: Vec<Cell>,
+    pub cells: Vec<Cell>,
     last_piece: Option<(Point, Piece)>,
 }
 
