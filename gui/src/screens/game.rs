@@ -58,6 +58,7 @@ pub struct Game<'a> {
     board_height: u32,
     rect_width: f32,
     rect_height: f32,
+    engine: Engine,
 }
 
 impl<'a> Game<'a> {
@@ -69,7 +70,32 @@ impl<'a> Game<'a> {
         height: f32,
         board_width: u32,
         board_height: u32,
+        p1_start: Point,
+        p2_start: Point,
     ) -> Self {
+        let plat = match Plateau::new(
+            board_width,
+            board_height,
+            &p1_start,
+            &p2_start,
+        ) {
+            Ok(plat) => plat,
+            Err(msg) => panic!(msg),
+        };
+
+        let p_bag = PieceBag::new([5, 7], [5, 7]);
+
+        let mut engine = match Engine::new(
+            plat,
+            p_bag,
+            String::from("../resources/players/gsteyn.filler"),
+            Some(String::from("../resources/players/gsteyn.filler")),
+            2,
+        ) {
+            Err(e) => panic!(e),
+            Ok(engin) => engin,
+        };
+
         Self {
             screen,
             display,
@@ -80,10 +106,12 @@ impl<'a> Game<'a> {
             board_height,
             rect_width: width / board_width as f32,
             rect_height: height / board_height as f32,
+            engine,
         }
     }
 
-    fn draw_plateau(&mut self, plateau: &Plateau, target: &mut glium::Frame) {
+    fn draw_plateau(&mut self, target: &mut glium::Frame) {
+        let plateau = self.engine.get_plateau();
         for (i, cell) in plateau.cells.iter().enumerate() {
             match cell {
                 Cell::Empty => continue,
@@ -168,46 +196,19 @@ impl<'a> Game<'a> {
     }
 
     pub fn main_loop(&mut self) {
-        let player1_start = Point { x: 4, y: 4 };
-        let player2_start = Point { x: 94, y: 94 };
-
-        let plat = match Plateau::new(
-            self.board_width,
-            self.board_height,
-            &player1_start,
-            &player2_start,
-        ) {
-            Ok(plat) => plat,
-            Err(msg) => panic!(msg),
-        };
-
-        let p_bag = PieceBag::new([5, 7], [5, 7]);
-
-        let mut steve = match Engine::new(
-            plat,
-            p_bag,
-            String::from("../resources/players/gsteyn.filler"),
-            Some(String::from("../resources/players/gsteyn.filler")),
-            2,
-        ) {
-            Err(e) => panic!(e),
-            Ok(engin) => engin,
-        };
-
-        let ERROR_THRESHOLD = 3;
-
-        let mut errors: u8 = 0;
-
         let mut target = self.display.draw();
         target.clear_color(0.0, 0.0, 1.0, 1.0);
 
         target.finish().unwrap();
 
+        let ERROR_THRESHOLD = 3;
+        let mut errors: u8 = 0;
+
         let mut closed = false;
         while !closed {
             let mut target = self.display.draw();
 
-            match steve.next_move() {
+            match self.engine.next_move() {
                 Ok(response) => {
                     errors = 0;
                     let pos = Point::try_from(&response.raw_response).unwrap();
@@ -265,7 +266,7 @@ impl<'a> Game<'a> {
             });
 
             if reset {
-                self.draw_plateau(steve.get_plateau(), &mut target);
+                self.draw_plateau(&mut target);
             }
 
             target.finish().unwrap();

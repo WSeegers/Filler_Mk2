@@ -11,6 +11,8 @@ use conrod::Widget;
 
 use super::Screen;
 
+use fillercore::models::point::Point;
+
 static TITLE: &str = "filler_mk2";
 
 const INITIAL_WINDOW_WIDTH: u32 = 800;
@@ -83,6 +85,8 @@ pub fn main_loop() {
                 Screen::Home => Home::new(&mut screen).set(home_id, &mut ui.set_widgets()),
                 Screen::PSelect => PlayerSelect::new().set(player_select_id, &mut ui.set_widgets()),
                 Screen::Game => {
+                    let p1_start = Point { x: 4, y: 4 };
+                    let p2_start = Point { x: 94, y: 94 };
                     let mut game = Game::new(
                         &mut screen,
                         &mut display,
@@ -91,6 +95,8 @@ pub fn main_loop() {
                         500.0,
                         100,
                         100,
+                        p1_start,
+                        p2_start,
                     );
                     game.main_loop();
                 }
