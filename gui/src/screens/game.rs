@@ -3,7 +3,7 @@ use fillercore::models::*;
 use fillercore::models::piece::{Piece, PieceBag};
 use fillercore::models::plateau::{Plateau, Cell};
 use fillercore::models::player::Player;
-use fillercore::models::point::Point;
+use fillercore::models::point::{Point, TryFrom};
 
 use fillercore::engine::Engine;
 
@@ -49,15 +49,16 @@ implement_vertex!(Vertex, position);
 pub struct Game<'a> {
     display: &'a mut conrod::glium::Display,
     events_loop: &'a mut glium::glutin::EventsLoop,
-    width: u32,
-    height: u32,
+    width: f32,
+    height: f32,
     board_width: u32,
     board_height: u32,
-    square_size: u32,
+    rect_width: f32,
+    rect_height: f32,
 }
 
 impl<'a> Game<'a> {
-    pub fn new(display: &'a mut conrod::glium::Display, events_loop: &'a mut glutin::EventsLoop, width: u32, height: u32, board_width: u32, board_height: u32) -> Self {
+    pub fn new(display: &'a mut conrod::glium::Display, events_loop: &'a mut glutin::EventsLoop, width: f32, height: f32, board_width: u32, board_height: u32) -> Self {
 
         Self {
             display,
@@ -66,40 +67,58 @@ impl<'a> Game<'a> {
             height,
             board_width,
             board_height,
-            square_size: width / board_width,
+            rect_width: width / board_width as f32,
+            rect_height: height / board_height as f32,
         }
     }
     
-    fn render(&mut self, plateau: &Plateau, target: &mut glium::Frame) {
+    fn draw_plateau(&mut self, plateau: &Plateau, target: &mut glium::Frame) {
         for (i, cell) in plateau.cells.iter().enumerate() {
             match cell {
                 Cell::Empty => continue,
                 _ => ()
             }
 
-            let x: u32 = i as u32 % (self.board_height) * (self.square_size);
-            let y: u32 = i as u32 / (self.board_height) * (self.square_size);
+            let x: f32 = i as f32 % (self.board_height as f32);
+            let y: f32 = i as f32 / (self.board_height as f32);
 
-            self.draw_square(x, y, target, cell);
+            self.draw_rect(x * self.rect_width, y * self.rect_height, target, cell);
         }
     }
 
-    fn normalize_x(&self, x: u32) -> f32 {
-        ((x as f32 / self.width as f32) - 1.0) as f32
+    fn draw_piece(&mut self, piece: Piece, pos: Point, player: &Player, target: &mut glium::Frame) {
+        let cell = match player {
+            Player::Player1 => Cell::Player1(true),
+            Player::Player2 => Cell::Player2(true),
+        };
+
+        for (i, block) in piece.cells.iter().enumerate() {
+            if (*block) {
+                let x: f32 = i as f32 % piece.width as f32 + pos.x as f32;
+                let y: f32 = i as f32 / piece.height as f32 + pos.y as f32;
+
+                self.draw_rect(x * self.rect_width, y * self.rect_height, target, &cell);
+            }
+        }
     }
 
-    fn normalize_y(&self, y: u32) -> f32 {
-        ((y as f32 / self.height as f32) - 1 as f32) as f32
+    fn normalize_x(&self, x: f32) -> f32 {
+        (x / self.width) * 2.0 - 1.0
     }
 
-    fn draw_square(&self, x: u32, y: u32, target: &mut glium::Frame, cell: &Cell) {
+    fn normalize_y(&self, y: f32) -> f32 {
+        (y / self.height) * 2.0 - 1.0
+    }
+
+    fn draw_rect(&self, x: f32, y: f32, target: &mut glium::Frame, cell: &Cell) {
         let start_x = self.normalize_x(x);
         let start_y = -self.normalize_y(y);
-        let sq_width: f32 = self.square_size as f32 / self.width as f32 * 2.0;
+        let rect_width: f32 = self.rect_width / self.width * 1.5;
+        let rect_height: f32 = self.rect_height / self.height * 1.5;
         let vertex1 = Vertex { position: [start_x, start_y] };
-        let vertex2 = Vertex { position: [ start_x + sq_width,  start_y] };
-        let vertex3 = Vertex { position: [ start_x + sq_width, start_y - sq_width] };
-        let vertex4 = Vertex { position: [ start_x, start_y - sq_width] };
+        let vertex2 = Vertex { position: [ start_x + rect_width,  start_y] };
+        let vertex3 = Vertex { position: [ start_x + rect_width, start_y - rect_height] };
+        let vertex4 = Vertex { position: [ start_x, start_y - rect_height] };
         let shape = vec![vertex1, vertex2, vertex3, vertex4];
 
         let disp = self.display.clone();
@@ -126,9 +145,10 @@ impl<'a> Game<'a> {
 
     pub fn main_loop(&mut self) {
         let player1_start = Point { x: 4, y: 4 };
-        let player2_start = Point { x: 44, y: 44 };
+        let player2_start = Point { x: 94, y: 94 };
 
-        let plat = match Plateau::new(50, 50, &player1_start, &player2_start) { Ok(plat) => plat,
+        let plat = match Plateau::new(self.board_width, self.board_height, &player1_start, &player2_start) {
+            Ok(plat) => plat,
             Err(msg) => panic!(msg),
         };
 
@@ -157,6 +177,8 @@ impl<'a> Game<'a> {
                 match steve.next_move() {
                     Ok(response) => {
                         errors = 0;
+                        let pos = Point::try_from(&response.raw_response).unwrap();
+                        self.draw_piece(response.piece, pos, &response.player, &mut target);
                         ()
                     }
                     Err(e) => {
@@ -166,7 +188,7 @@ impl<'a> Game<'a> {
                 }
 
                 let plat: &Plateau = steve.get_plateau();
-                self.render(plat, &mut target);
+                // self.draw_plateau(plat, &mut target);
 
                 match errors {
                     e if e >= ERROR_THRESHOLD => break,
@@ -175,6 +197,11 @@ impl<'a> Game<'a> {
 
                 let width = &mut self.width;
                 let height = &mut self.height;
+                let rect_width = &mut self.rect_width;
+                let rect_height = &mut self.rect_height;
+                let board_width = &mut self.board_width;
+                let board_height = &mut self.board_height;
+                let mut reset = false;
 
                 self.events_loop.poll_events(|ev| {
                     match ev {
@@ -190,16 +217,22 @@ impl<'a> Game<'a> {
                                 ..
                             } => closed = true,
                             glium::glutin::WindowEvent::Resized(size) => {
-                                println!("w: {}, h: {}", size.width, size.height);
-                                *width = size.width as u32;
-                                *height = size.height as u32;
+                                *width = size.width as f32;
+                                *height = size.height as f32;
+                                *rect_width = *width / *board_width as f32;
+                                *rect_height = *height / *board_height as f32;
                                 target.clear_color(0.0, 0.0, 1.0, 1.0);
+                                reset = true;
                             },
                             _ => (),
                         },
                         _ => (),
                     }
                 });
+
+                if (reset) {
+                    self.draw_plateau(plat, &mut target);
+                }
 
                 target.finish().unwrap();
             }
