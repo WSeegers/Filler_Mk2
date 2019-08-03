@@ -100,11 +100,23 @@ impl<'a> Game<'a> {
     //     }
     // }
 
-    fn draw_square(&self, x: f32, y: f32, target: &mut glium::Frame) {
-        let vertex1 = Vertex { position: [-0.5, 0.5] };
-        let vertex2 = Vertex { position: [ 0.5,  0.5] };
-        let vertex3 = Vertex { position: [ 0.5, -0.5] };
-        let vertex4 = Vertex { position: [ -0.5, -0.5] };
+    fn normalize_x(&self, x: u32) -> f32 {
+        ((x as f32 / self.width as f32) - 1.0) as f32
+    }
+
+    fn normalize_y(&self, y: u32) -> f32 {
+        ((y as f32 / self.height as f32) - 1 as f32) as f32
+    }
+
+    fn draw_square(&self, x: u32, y: u32, target: &mut glium::Frame) {
+        let start_x = self.normalize_x(x);
+        let start_y = -self.normalize_y(y);
+        let sq_width: f32 = self.square_size as f32 / self.width as f32 * 2.0;
+        let vertex1 = Vertex { position: [start_x, start_y] };
+        let vertex2 = Vertex { position: [ start_x + sq_width,  start_y] };
+        let vertex3 = Vertex { position: [ start_x + sq_width, start_y - sq_width] };
+        let vertex4 = Vertex { position: [ start_x, start_y - sq_width] };
+        println!("startx: {}\n starty: {}\n sq_width: {}", start_x, start_y, sq_width);
         let shape = vec![vertex1, vertex2, vertex3, vertex4];
 
         let disp = self.display.clone();
@@ -118,8 +130,6 @@ impl<'a> Game<'a> {
         ).unwrap();
 
         let program = glium::Program::from_source(&disp, vertex_shader_src, fragment_shader_src, None).unwrap();
-
-        target.clear_color(0.0, 0.0, 1.0, 1.0);
 
         target.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms,
                     &Default::default()).unwrap();
@@ -146,6 +156,10 @@ impl<'a> Game<'a> {
 
         // let mut errors: u8 = 0;
 
+        let mut target = self.display.draw();
+        target.clear_color(0.0, 0.0, 1.0, 1.0);
+
+        target.finish().unwrap();
 
         loop {
             let mut closed = false;
@@ -153,7 +167,8 @@ impl<'a> Game<'a> {
 
                 let mut target = self.display.draw();
 
-                self.draw_square(2.0, 2.0, &mut target);
+                self.draw_square(50, 50, &mut target);
+                self.draw_square(100, 100, &mut target);
 
                 target.finish().unwrap();
 
