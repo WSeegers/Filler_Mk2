@@ -83,7 +83,7 @@ pub fn main_loop() {
                 Screen::Home => Home::new(&mut screen).set(home_id, &mut ui.set_widgets()),
                 Screen::PSelect => PlayerSelect::new().set(player_select_id, &mut ui.set_widgets()),
                 Screen::Game => {
-                    let mut game = Game::new(&mut display, &mut events_loop, 800, 500, 50, 50);
+                    let mut game = Game::new(&mut screen, &mut display, &mut events_loop, 800.0, 500.0, 100, 100);
                     game.main_loop();
                 },
                 Screen::Exit => break 'main,

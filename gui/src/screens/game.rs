@@ -9,6 +9,8 @@ use fillercore::engine::Engine;
 
 use glium::{glutin, Surface};
 
+use crate::core::Screen;
+
 #[derive(Copy, Clone)]
 struct Vertex {
     position: [f32; 2],
@@ -47,6 +49,7 @@ static fragment_shader_src_green: &'static str = r#"
 implement_vertex!(Vertex, position);
 
 pub struct Game<'a> {
+    screen: &'a mut Screen,
     display: &'a mut conrod::glium::Display,
     events_loop: &'a mut glium::glutin::EventsLoop,
     width: f32,
@@ -58,9 +61,10 @@ pub struct Game<'a> {
 }
 
 impl<'a> Game<'a> {
-    pub fn new(display: &'a mut conrod::glium::Display, events_loop: &'a mut glutin::EventsLoop, width: f32, height: f32, board_width: u32, board_height: u32) -> Self {
+    pub fn new(screen: &'a mut Screen, display: &'a mut conrod::glium::Display, events_loop: &'a mut glutin::EventsLoop, width: f32, height: f32, board_width: u32, board_height: u32) -> Self {
 
         Self {
+            screen,
             display,
             events_loop,
             width,
@@ -93,7 +97,7 @@ impl<'a> Game<'a> {
         };
 
         for (i, block) in piece.cells.iter().enumerate() {
-            if (*block) {
+            if *block {
                 let x: f32 = i as f32 % piece.width as f32 + pos.x as f32;
                 let y: f32 = i as f32 / piece.height as f32 + pos.y as f32;
 
@@ -168,74 +172,76 @@ impl<'a> Game<'a> {
 
         target.finish().unwrap();
 
-        loop {
-            let mut closed = false;
-            while !closed {
+        let mut closed = false;
+        while !closed {
 
-                let mut target = self.display.draw();
+            let mut target = self.display.draw();
 
-                match steve.next_move() {
-                    Ok(response) => {
-                        errors = 0;
-                        let pos = Point::try_from(&response.raw_response).unwrap();
-                        self.draw_piece(response.piece, pos, &response.player, &mut target);
-                        ()
-                    }
-                    Err(e) => {
-                        println!("{}", e);
-                        errors += 1;
-                    }
+            match steve.next_move() {
+                Ok(response) => {
+                    errors = 0;
+                    let pos = Point::try_from(&response.raw_response).unwrap();
+                    self.draw_piece(response.piece, pos, &response.player, &mut target);
+                    ()
                 }
-
-                let plat: &Plateau = steve.get_plateau();
-                // self.draw_plateau(plat, &mut target);
-
-                match errors {
-                    e if e >= ERROR_THRESHOLD => break,
-                    _ => (),
+                Err(e) => {
+                    println!("{}", e);
+                    errors += 1;
                 }
+            }
 
-                let width = &mut self.width;
-                let height = &mut self.height;
-                let rect_width = &mut self.rect_width;
-                let rect_height = &mut self.rect_height;
-                let board_width = &mut self.board_width;
-                let board_height = &mut self.board_height;
-                let mut reset = false;
+            let plat: &Plateau = steve.get_plateau();
+            // self.draw_plateau(plat, &mut target);
 
-                self.events_loop.poll_events(|ev| {
-                    match ev {
-                        glium::glutin::Event::WindowEvent { event, .. } => match event {
-                            // Break from the loop upon `Escape`.
-                            glium::glutin::WindowEvent::CloseRequested
-                            | glium::glutin::WindowEvent::KeyboardInput {
-                                input:
-                                    glium::glutin::KeyboardInput {
-                                        virtual_keycode: Some(glium::glutin::VirtualKeyCode::Escape),
-                                        ..
-                                    },
-                                ..
-                            } => closed = true,
-                            glium::glutin::WindowEvent::Resized(size) => {
-                                *width = size.width as f32;
-                                *height = size.height as f32;
-                                *rect_width = *width / *board_width as f32;
-                                *rect_height = *height / *board_height as f32;
-                                target.clear_color(0.0, 0.0, 1.0, 1.0);
-                                reset = true;
-                            },
-                            _ => (),
+            match errors {
+                e if e >= ERROR_THRESHOLD => break,
+                _ => (),
+            }
+
+            let width = &mut self.width;
+            let height = &mut self.height;
+            let rect_width = &mut self.rect_width;
+            let rect_height = &mut self.rect_height;
+            let board_width = &mut self.board_width;
+            let board_height = &mut self.board_height;
+            let screen = &mut self.screen;
+            let mut reset = false;
+
+            self.events_loop.poll_events(|ev| {
+                match ev {
+                    glium::glutin::Event::WindowEvent { event, .. } => match event {
+                        // Break from the loop upon `Escape`.
+                        glium::glutin::WindowEvent::CloseRequested
+                        | glium::glutin::WindowEvent::KeyboardInput {
+                            input:
+                                glium::glutin::KeyboardInput {
+                                    virtual_keycode: Some(glium::glutin::VirtualKeyCode::Escape),
+                                    ..
+                                },
+                            ..
+                        } => {
+                            closed = true;
+                            **screen = Screen::Home;
+                        },
+                        glium::glutin::WindowEvent::Resized(size) => {
+                            *width = size.width as f32;
+                            *height = size.height as f32;
+                            *rect_width = *width / *board_width as f32;
+                            *rect_height = *height / *board_height as f32;
+                            target.clear_color(0.0, 0.0, 1.0, 1.0);
+                            reset = true;
                         },
                         _ => (),
-                    }
-                });
-
-                if (reset) {
-                    self.draw_plateau(plat, &mut target);
+                    },
+                    _ => (),
                 }
+            });
 
-                target.finish().unwrap();
+            if reset {
+                self.draw_plateau(plat, &mut target);
             }
+
+            target.finish().unwrap();
         }
     }
 }
