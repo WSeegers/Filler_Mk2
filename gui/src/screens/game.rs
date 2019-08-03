@@ -9,6 +9,34 @@ use fillercore::engine::Engine;
 
 use glium::{glutin, Surface};
 
+#[derive(Copy, Clone)]
+struct Vertex {
+    position: [f32; 2],
+}
+
+static vertex_shader_src: &'static str = r#"
+    #version 140
+
+    in vec2 position;
+
+    void main() {
+        gl_Position = vec4(position, 0.0, 1.0);
+    }
+"#;
+
+static fragment_shader_src: &'static str = r#"
+    #version 140
+
+    out vec4 color;
+
+    void main() {
+        color = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+"#;
+
+
+implement_vertex!(Vertex, position);
+
 pub struct Game<'a> {
     display: &'a mut conrod::glium::Display,
     events_loop: &'a mut glium::glutin::EventsLoop,
@@ -72,6 +100,31 @@ impl<'a> Game<'a> {
     //     }
     // }
 
+    fn draw_square(&self, x: f32, y: f32, target: &mut glium::Frame) {
+        let vertex1 = Vertex { position: [-0.5, 0.5] };
+        let vertex2 = Vertex { position: [ 0.5,  0.5] };
+        let vertex3 = Vertex { position: [ 0.5, -0.5] };
+        let vertex4 = Vertex { position: [ -0.5, -0.5] };
+        let shape = vec![vertex1, vertex2, vertex3, vertex4];
+
+        let disp = self.display.clone();
+        let vertex_buffer = glium::VertexBuffer::new(&disp, &shape).unwrap();
+
+        let ib_data: Vec<u16> = vec![0, 1, 3, 1, 2, 3];
+        let indices = glium::IndexBuffer::new(
+            &disp,
+            glium::index::PrimitiveType::TrianglesList,
+            &ib_data
+        ).unwrap();
+
+        let program = glium::Program::from_source(&disp, vertex_shader_src, fragment_shader_src, None).unwrap();
+
+        target.clear_color(0.0, 0.0, 1.0, 1.0);
+
+        target.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms,
+                    &Default::default()).unwrap();
+    }
+
     pub fn main_loop(&mut self) {
         // let player1_start = Point { x: 4, y: 4 };
         // let player2_start = Point { x: 44, y: 44 };
@@ -93,69 +146,30 @@ impl<'a> Game<'a> {
 
         // let mut errors: u8 = 0;
 
-        #[derive(Copy, Clone)]
-        struct Vertex {
-            position: [f32; 2],
-        }
-
-        implement_vertex!(Vertex, position);
-
-        let vertex1 = Vertex { position: [-0.5, 0.5] };
-        let vertex2 = Vertex { position: [ 0.5,  0.5] };
-        let vertex3 = Vertex { position: [ 0.5, -0.5] };
-        let vertex4 = Vertex { position: [ -0.5, -0.5] };
-        let shape = vec![vertex1, vertex2, vertex3, vertex4];
-
-        let disp = self.display.clone();
-        let vertex_buffer = glium::VertexBuffer::new(&disp, &shape).unwrap();
-
-        let ib_data: Vec<u16> = vec![0, 1, 3, 1, 2, 3];
-        let indices = glium::IndexBuffer::new(
-            &disp,
-            glium::index::PrimitiveType::TrianglesList,
-            &ib_data
-        ).unwrap();
-        // let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-
-
-        let vertex_shader_src = r#"
-            #version 140
-
-            in vec2 position;
-
-            void main() {
-                gl_Position = vec4(position, 0.0, 1.0);
-            }
-        "#;
-
-        let fragment_shader_src = r#"
-            #version 140
-
-            out vec4 color;
-
-            void main() {
-                color = vec4(1.0, 0.0, 0.0, 1.0);
-            }
-        "#;
-
-        let program = glium::Program::from_source(&disp, vertex_shader_src, fragment_shader_src, None).unwrap();
 
         loop {
-            use glium::{glutin, Surface};
-
             let mut closed = false;
             while !closed {
-                let mut target = self.display.draw();
-                target.clear_color(0.0, 0.0, 1.0, 1.0);
 
-                target.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms,
-                            &Default::default()).unwrap();
+                let mut target = self.display.draw();
+
+                self.draw_square(2.0, 2.0, &mut target);
+
                 target.finish().unwrap();
 
                 self.events_loop.poll_events(|ev| {
                     match ev {
-                        glutin::Event::WindowEvent { event, .. } => match event {
-                            glutin::WindowEvent::CloseRequested => closed = true,
+                        glium::glutin::Event::WindowEvent { event, .. } => match event {
+                            // Break from the loop upon `Escape`.
+                            glium::glutin::WindowEvent::CloseRequested
+                            | glium::glutin::WindowEvent::KeyboardInput {
+                                input:
+                                    glium::glutin::KeyboardInput {
+                                        virtual_keycode: Some(glium::glutin::VirtualKeyCode::Escape),
+                                        ..
+                                    },
+                                ..
+                            } => closed = true,
                             _ => (),
                         },
                         _ => (),
