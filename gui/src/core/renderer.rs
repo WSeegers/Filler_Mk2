@@ -15,8 +15,10 @@ use fillercore::models::point::Point;
 
 static TITLE: &str = "filler_mk2";
 
-const INITIAL_WINDOW_WIDTH: u32 = 800;
-const INITIAL_WINDOW_HEIGHT: u32 = 500;
+const INITIAL_WINDOW_WIDTH: f32 = 800.0;
+const INITIAL_WINDOW_HEIGHT: f32 = 500.0;
+const INITIAL_BOARD_WIDTH: u32 = 50;
+const INITIAL_BOARD_HEIGHT: u32 = 50;
 
 widget_ids!(struct Ids {
     home,
@@ -28,7 +30,7 @@ pub fn main_loop() {
     let mut events_loop = glium::glutin::EventsLoop::new();
     let window = glium::glutin::WindowBuilder::new()
         .with_title(TITLE)
-        .with_dimensions((INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT).into());
+        .with_dimensions((INITIAL_WINDOW_WIDTH as u32, INITIAL_WINDOW_HEIGHT as u32).into());
     let context = glium::glutin::ContextBuilder::new()
         .with_vsync(true)
         .with_multisampling(4);
@@ -40,7 +42,6 @@ pub fn main_loop() {
     // Add a `Font` to the `Ui`'s `font::Map` from file.
     let font_path = Path::new("src/assets/fonts/blocks.ttf");
     ui.fonts.insert_from_file(font_path).unwrap();
-    // ui.fonts.insert(conrod::text::FontCollection::from_bytes(ttf_noto_sans::REGULAR).unwrap().into_font().unwrap());
 
     let mut renderer = conrod::backend::glium::Renderer::new(&display).unwrap();
 
@@ -50,7 +51,16 @@ pub fn main_loop() {
     let home_id = Ids::new(ui.widget_id_generator()).home;
     let player_select_id = Ids::new(ui.widget_id_generator()).player_select;
     let game_id = Ids::new(ui.widget_id_generator()).game;
+
     let mut screen = Screen::Home;
+    let mut window_width = INITIAL_WINDOW_WIDTH;
+    let mut window_height = INITIAL_WINDOW_HEIGHT;
+    let mut board_width = INITIAL_BOARD_WIDTH;
+    let mut board_height = INITIAL_BOARD_HEIGHT;
+    let p1_start = Point { x: 4, y: 4 };
+    let p2_start = Point { x: (board_width - 4) as i32, y: (board_height - 4) as i32 };
+    let p1_path = Some(String::from("../resources/players/gsteyn.filler"));
+    let p2_path = Some(String::from("../resources/players/gsteyn.filler"));
 
     // Poll events from the window.
     let mut event_loop = EventLoop::new();
@@ -85,16 +95,14 @@ pub fn main_loop() {
                 Screen::Home => Home::new(&mut screen).set(home_id, &mut ui.set_widgets()),
                 Screen::PSelect => PlayerSelect::new().set(player_select_id, &mut ui.set_widgets()),
                 Screen::Game => {
-                    let p1_start = Point { x: 4, y: 4 };
-                    let p2_start = Point { x: 94, y: 94 };
                     let mut game = Game::new(
                         &mut screen,
                         &mut display,
                         &mut events_loop,
-                        800.0,
-                        500.0,
-                        100,
-                        100,
+                        &mut window_width,
+                        &mut window_height,
+                        board_width,
+                        board_width,
                         p1_start,
                         p2_start,
                     );

@@ -52,8 +52,8 @@ pub struct Game<'a> {
     screen: &'a mut Screen,
     display: &'a mut conrod::glium::Display,
     events_loop: &'a mut glium::glutin::EventsLoop,
-    width: f32,
-    height: f32,
+    window_width: &'a mut f32,
+    window_height: &'a mut f32,
     board_width: u32,
     board_height: u32,
     rect_width: f32,
@@ -66,8 +66,8 @@ impl<'a> Game<'a> {
         screen: &'a mut Screen,
         display: &'a mut conrod::glium::Display,
         events_loop: &'a mut glutin::EventsLoop,
-        width: f32,
-        height: f32,
+        window_width: &'a mut f32,
+        window_height: &'a mut f32,
         board_width: u32,
         board_height: u32,
         p1_start: Point,
@@ -96,16 +96,19 @@ impl<'a> Game<'a> {
             Ok(engin) => engin,
         };
 
+        let rect_width = *window_width / board_width as f32;
+        let rect_height = *window_height / board_height as f32;
+
         Self {
             screen,
             display,
             events_loop,
-            width,
-            height,
+            window_width,
+            window_height,
             board_width,
             board_height,
-            rect_width: width / board_width as f32,
-            rect_height: height / board_height as f32,
+            rect_width,
+            rect_height,
             engine,
         }
     }
@@ -142,18 +145,18 @@ impl<'a> Game<'a> {
     }
 
     fn normalize_x(&self, x: f32) -> f32 {
-        (x / self.width) * 2.0 - 1.0
+        (x / *self.window_width) * 2.0 - 1.0
     }
 
     fn normalize_y(&self, y: f32) -> f32 {
-        (y / self.height) * 2.0 - 1.0
+        (y / *self.window_height) * 2.0 - 1.0
     }
 
     fn draw_rect(&self, x: f32, y: f32, target: &mut glium::Frame, cell: &Cell) {
         let start_x = self.normalize_x(x);
         let start_y = -self.normalize_y(y);
-        let rect_width: f32 = self.rect_width / self.width * 1.5;
-        let rect_height: f32 = self.rect_height / self.height * 1.5;
+        let rect_width: f32 = self.rect_width / *self.window_width * 1.5;
+        let rect_height: f32 = self.rect_height / *self.window_height * 1.5;
         let vertex1 = Vertex {
             position: [start_x, start_y],
         };
@@ -226,8 +229,8 @@ impl<'a> Game<'a> {
                 _ => (),
             }
 
-            let width = &mut self.width;
-            let height = &mut self.height;
+            let window_width = &mut self.window_width;
+            let window_height = &mut self.window_height;
             let rect_width = &mut self.rect_width;
             let rect_height = &mut self.rect_height;
             let board_width = &mut self.board_width;
@@ -252,10 +255,10 @@ impl<'a> Game<'a> {
                             **screen = Screen::Home;
                         }
                         glium::glutin::WindowEvent::Resized(size) => {
-                            *width = size.width as f32;
-                            *height = size.height as f32;
-                            *rect_width = *width / *board_width as f32;
-                            *rect_height = *height / *board_height as f32;
+                            **window_width = size.width as f32;
+                            **window_height = size.height as f32;
+                            *rect_width = **window_width / *board_width as f32;
+                            *rect_height = **window_height / *board_height as f32;
                             target.clear_color(0.02, 0.03, 0.04, 1.0);
                             reset = true;
                         }
