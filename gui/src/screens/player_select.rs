@@ -1,6 +1,6 @@
 use conrod::{color, widget, Borderable, Colorable, Labelable, Positionable, Sizeable, Widget};
 
-use nfd::Response;
+// use nfd::Response;
 
 widget_ids!(struct Ids {
     canvas,
@@ -8,10 +8,13 @@ widget_ids!(struct Ids {
     p2_title,
     btn_p1_select,
     btn_p2_select,
+    map_size,
 });
 
 pub struct State {
     ids: Ids,
+    map_size_start: conrod::Scalar,
+    map_size_end: conrod::Scalar,
 }
 
 #[derive(WidgetCommon)]
@@ -36,6 +39,8 @@ impl Widget for PlayerSelect {
     fn init_state(&self, id_gen: widget::id::Generator) -> Self::State {
         State {
             ids: Ids::new(id_gen),
+            map_size_start: 0.0,
+            map_size_end: 10.0,
         }
     }
 
@@ -65,15 +70,15 @@ impl Widget for PlayerSelect {
             .label("Select Player")
             .set(state.ids.btn_p1_select, ui)
         {
-            let result = nfd::open_file_dialog(None, None).unwrap_or_else(|e| {
-                panic!(e);
-            });
+            // let result = nfd::open_file_dialog(None, None).unwrap_or_else(|e| {
+            //     panic!(e);
+            // });
 
-            match result {
-                Response::Okay(file_path) => println!("File path = {:?}", file_path),
-                Response::OkayMultiple(files) => println!("Files {:?}", files),
-                Response::Cancel => println!("User canceled"),
-            }
+            // match result {
+            //     Response::Okay(file_path) => println!("File path = {:?}", file_path),
+            //     Response::OkayMultiple(files) => println!("Files {:?}", files),
+            //     Response::Cancel => println!("User canceled"),
+            // }
         }
 
         widget::Text::new("Player 2")
@@ -90,15 +95,32 @@ impl Widget for PlayerSelect {
             .label("Select Player")
             .set(state.ids.btn_p2_select, ui)
         {
-            let result = nfd::open_file_dialog(None, None).unwrap_or_else(|e| {
-                panic!(e);
-            });
+            // let result = nfd::open_file_dialog(None, None).unwrap_or_else(|e| {
+            //     panic!(e);
+            // });
 
-            match result {
-                Response::Okay(file_path) => println!("File path = {:?}", file_path),
-                Response::OkayMultiple(files) => println!("Files {:?}", files),
-                Response::Cancel => println!("User canceled"),
-            }
+            // match result {
+            //     Response::Okay(file_path) => println!("File path = {:?}", file_path),
+            //     Response::OkayMultiple(files) => println!("Files {:?}", files),
+            //     Response::Cancel => println!("User canceled"),
+            // }
         }
+
+        const PAD: conrod::Scalar = 20.0;
+        let mut start: conrod::Scalar = 0.0;
+        let mut end: conrod::Scalar = 0.0;
+        for (edge, value) in widget::RangeSlider::new(state.map_size_start, state.map_size_end, 15.0, 100.0)
+            .color(color::LIGHT_BLUE)
+            .padded_w_of(state.ids.canvas, PAD)
+            .h(30.0)
+            .x_y(0.0, -200.0)
+            // .mid_top_with_margin_on(state.ids.canvas, PAD)
+            .set(state.ids.map_size, ui)
+            {
+                match edge {
+                    widget::range_slider::Edge::Start => state.update(|state| {state.map_size_start = value}),
+                    widget::range_slider::Edge::End => state.update(|state| {state.map_size_end = value}),
+                }
+            }
     }
 }
