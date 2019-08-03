@@ -197,7 +197,7 @@ impl<'a> Game<'a> {
 
     pub fn main_loop(&mut self) {
         let mut target = self.display.draw();
-        target.clear_color(0.0, 0.0, 1.0, 1.0);
+        target.clear_color(0.02, 0.03, 0.04, 1.0);
 
         target.finish().unwrap();
 
@@ -256,7 +256,7 @@ impl<'a> Game<'a> {
                             *height = size.height as f32;
                             *rect_width = *width / *board_width as f32;
                             *rect_height = *height / *board_height as f32;
-                            target.clear_color(0.0, 0.0, 1.0, 1.0);
+                            target.clear_color(0.02, 0.03, 0.04, 1.0);
                             reset = true;
                         }
                         _ => (),
