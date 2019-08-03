@@ -2,12 +2,16 @@ use conrod::{color, widget, Borderable, Colorable, Labelable, Positionable, Size
 
 // use nfd::Response;
 
+use fillercore::models::point::Point;
+use crate::core::Screen;
+
 widget_ids!(struct Ids {
     canvas,
     p1_title,
     p2_title,
     btn_p1_select,
     btn_p2_select,
+    btn_start,
     map_size,
 });
 
@@ -18,20 +22,34 @@ pub struct State {
 }
 
 #[derive(WidgetCommon)]
-pub struct PlayerSelect {
+pub struct PlayerSelect<'a> {
     #[conrod(common_builder)]
     common: widget::CommonBuilder,
+    screen: &'a mut Screen,
+    p1_path: &'a mut Option<String>,
+    p2_path: &'a mut Option<String>,
+    p1_start: &'a mut Point,
+    p2_start: &'a mut Point,
+    board_width: &'a mut u32,
+    board_height: &'a mut u32,
 }
 
-impl PlayerSelect {
-    pub fn new() -> Self {
+impl<'a> PlayerSelect<'a> {
+    pub fn new(screen: &'a mut Screen, p1_path: &'a mut Option<String>, p2_path: &'a mut Option<String>, p1_start: &'a mut Point, p2_start: &'a mut Point, board_width: &'a mut u32, board_height: &'a mut u32) -> Self {
         Self {
             common: widget::CommonBuilder::default(),
+            screen,
+            p1_path,
+            p2_path,
+            p1_start,
+            p2_start,
+            board_width,
+            board_height,
         }
     }
 }
 
-impl Widget for PlayerSelect {
+impl<'a> Widget for PlayerSelect<'a> {
     type State = State;
     type Style = ();
     type Event = ();
@@ -105,6 +123,16 @@ impl Widget for PlayerSelect {
             //     Response::Cancel => println!("User canceled"),
             // }
         }
+
+        for _click in widget::Button::new()
+            .parent(state.ids.canvas)
+            .x_y(0.0, -250.0)
+            .w_h(250.0, 50.0)
+            .label("Start")
+            .set(state.ids.btn_start, ui)
+            {
+                *self.screen = Screen::Game;
+            }
 
         const PAD: conrod::Scalar = 20.0;
         let mut start: conrod::Scalar = 0.0;
