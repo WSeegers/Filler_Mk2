@@ -2,8 +2,8 @@ use conrod::{color, widget, Borderable, Colorable, Labelable, Positionable, Size
 
 // use nfd::Response;
 
-use fillercore::models::point::Point;
 use crate::core::Screen;
+use fillercore::models::point::Point;
 
 widget_ids!(struct Ids {
     canvas,
@@ -35,7 +35,15 @@ pub struct PlayerSelect<'a> {
 }
 
 impl<'a> PlayerSelect<'a> {
-    pub fn new(screen: &'a mut Screen, p1_path: &'a mut Option<String>, p2_path: &'a mut Option<String>, p1_start: &'a mut Point, p2_start: &'a mut Point, board_width: &'a mut u32, board_height: &'a mut u32) -> Self {
+    pub fn new(
+        screen: &'a mut Screen,
+        p1_path: &'a mut Option<String>,
+        p2_path: &'a mut Option<String>,
+        p1_start: &'a mut Point,
+        p2_start: &'a mut Point,
+        board_width: &'a mut u32,
+        board_height: &'a mut u32,
+    ) -> Self {
         Self {
             common: widget::CommonBuilder::default(),
             screen,
@@ -130,25 +138,28 @@ impl<'a> Widget for PlayerSelect<'a> {
             .w_h(250.0, 50.0)
             .label("Start")
             .set(state.ids.btn_start, ui)
-            {
-                *self.screen = Screen::Game;
-            }
+        {
+            *self.screen = Screen::Game;
+        }
 
         const PAD: conrod::Scalar = 20.0;
         let mut start: conrod::Scalar = 0.0;
         let mut end: conrod::Scalar = 0.0;
-        for (edge, value) in widget::RangeSlider::new(state.map_size_start, state.map_size_end, 15.0, 100.0)
-            .color(color::LIGHT_BLUE)
-            .padded_w_of(state.ids.canvas, PAD)
-            .h(30.0)
-            .x_y(0.0, -200.0)
-            // .mid_top_with_margin_on(state.ids.canvas, PAD)
-            .set(state.ids.map_size, ui)
-            {
-                match edge {
-                    widget::range_slider::Edge::Start => state.update(|state| {state.map_size_start = value}),
-                    widget::range_slider::Edge::End => state.update(|state| {state.map_size_end = value}),
+        for (edge, value) in
+            widget::RangeSlider::new(state.map_size_start, state.map_size_end, 15.0, 100.0)
+                .color(color::LIGHT_BLUE)
+                .padded_w_of(state.ids.canvas, PAD)
+                .h(30.0)
+                .x_y(0.0, -200.0)
+                // .mid_top_with_margin_on(state.ids.canvas, PAD)
+                .set(state.ids.map_size, ui)
+        {
+            match edge {
+                widget::range_slider::Edge::Start => {
+                    state.update(|state| state.map_size_start = value)
                 }
+                widget::range_slider::Edge::End => state.update(|state| state.map_size_end = value),
             }
+        }
     }
 }

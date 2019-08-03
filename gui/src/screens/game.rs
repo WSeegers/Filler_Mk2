@@ -73,12 +73,7 @@ impl<'a> Game<'a> {
         p1_start: Point,
         p2_start: Point,
     ) -> Self {
-        let plat = match Plateau::new(
-            board_width,
-            board_height,
-            &p1_start,
-            &p2_start,
-        ) {
+        let plat = match Plateau::new(board_width, board_height, &p1_start, &p2_start) {
             Ok(plat) => plat,
             Err(msg) => panic!(msg),
         };

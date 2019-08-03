@@ -58,7 +58,10 @@ pub fn main_loop() {
     let mut board_width = INITIAL_BOARD_WIDTH;
     let mut board_height = INITIAL_BOARD_HEIGHT;
     let mut p1_start = Point { x: 4, y: 4 };
-    let mut p2_start = Point { x: (board_width - 4) as i32, y: (board_height - 4) as i32 };
+    let mut p2_start = Point {
+        x: (board_width - 4) as i32,
+        y: (board_height - 4) as i32,
+    };
     let mut p1_path = Some(String::from("../resources/players/gsteyn.filler"));
     let mut p2_path = Some(String::from("../resources/players/gsteyn.filler"));
 
@@ -93,7 +96,16 @@ pub fn main_loop() {
         {
             match screen {
                 Screen::Home => Home::new(&mut screen).set(home_id, &mut ui.set_widgets()),
-                Screen::PSelect => PlayerSelect::new(&mut screen, &mut p1_path, &mut p2_path, &mut p1_start, &mut p2_start, &mut board_width, &mut board_height).set(player_select_id, &mut ui.set_widgets()),
+                Screen::PSelect => PlayerSelect::new(
+                    &mut screen,
+                    &mut p1_path,
+                    &mut p2_path,
+                    &mut p1_start,
+                    &mut p2_start,
+                    &mut board_width,
+                    &mut board_height,
+                )
+                .set(player_select_id, &mut ui.set_widgets()),
                 Screen::Game => {
                     let mut game = Game::new(
                         &mut screen,
