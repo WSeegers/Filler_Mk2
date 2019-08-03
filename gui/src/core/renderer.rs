@@ -6,7 +6,7 @@ use conrod::backend::glium::glium::Surface;
 use std::path::Path;
 use ttf_noto_sans;
 
-use crate::screens::{Home, PlayerSelect, Game};
+use crate::screens::{Game, Home, PlayerSelect};
 use conrod::Widget;
 
 use super::Screen;
@@ -83,9 +83,17 @@ pub fn main_loop() {
                 Screen::Home => Home::new(&mut screen).set(home_id, &mut ui.set_widgets()),
                 Screen::PSelect => PlayerSelect::new().set(player_select_id, &mut ui.set_widgets()),
                 Screen::Game => {
-                    let mut game = Game::new(&mut screen, &mut display, &mut events_loop, 800.0, 500.0, 100, 100);
+                    let mut game = Game::new(
+                        &mut screen,
+                        &mut display,
+                        &mut events_loop,
+                        800.0,
+                        500.0,
+                        100,
+                        100,
+                    );
                     game.main_loop();
-                },
+                }
                 Screen::Exit => break 'main,
                 _ => Home::new(&mut screen).set(home_id, &mut ui.set_widgets()),
             }

@@ -1,7 +1,7 @@
 use fillercore::models::*;
 
 use fillercore::models::piece::{Piece, PieceBag};
-use fillercore::models::plateau::{Plateau, Cell};
+use fillercore::models::plateau::{Cell, Plateau};
 use fillercore::models::player::Player;
 use fillercore::models::point::{Point, TryFrom};
 
@@ -61,8 +61,15 @@ pub struct Game<'a> {
 }
 
 impl<'a> Game<'a> {
-    pub fn new(screen: &'a mut Screen, display: &'a mut conrod::glium::Display, events_loop: &'a mut glutin::EventsLoop, width: f32, height: f32, board_width: u32, board_height: u32) -> Self {
-
+    pub fn new(
+        screen: &'a mut Screen,
+        display: &'a mut conrod::glium::Display,
+        events_loop: &'a mut glutin::EventsLoop,
+        width: f32,
+        height: f32,
+        board_width: u32,
+        board_height: u32,
+    ) -> Self {
         Self {
             screen,
             display,
@@ -75,12 +82,12 @@ impl<'a> Game<'a> {
             rect_height: height / board_height as f32,
         }
     }
-    
+
     fn draw_plateau(&mut self, plateau: &Plateau, target: &mut glium::Frame) {
         for (i, cell) in plateau.cells.iter().enumerate() {
             match cell {
                 Cell::Empty => continue,
-                _ => ()
+                _ => (),
             }
 
             let x: f32 = i as f32 % (self.board_height as f32);
@@ -119,21 +126,27 @@ impl<'a> Game<'a> {
         let start_y = -self.normalize_y(y);
         let rect_width: f32 = self.rect_width / self.width * 1.5;
         let rect_height: f32 = self.rect_height / self.height * 1.5;
-        let vertex1 = Vertex { position: [start_x, start_y] };
-        let vertex2 = Vertex { position: [ start_x + rect_width,  start_y] };
-        let vertex3 = Vertex { position: [ start_x + rect_width, start_y - rect_height] };
-        let vertex4 = Vertex { position: [ start_x, start_y - rect_height] };
+        let vertex1 = Vertex {
+            position: [start_x, start_y],
+        };
+        let vertex2 = Vertex {
+            position: [start_x + rect_width, start_y],
+        };
+        let vertex3 = Vertex {
+            position: [start_x + rect_width, start_y - rect_height],
+        };
+        let vertex4 = Vertex {
+            position: [start_x, start_y - rect_height],
+        };
         let shape = vec![vertex1, vertex2, vertex3, vertex4];
 
         let disp = self.display.clone();
         let vertex_buffer = glium::VertexBuffer::new(&disp, &shape).unwrap();
 
         let ib_data: Vec<u16> = vec![0, 1, 3, 1, 2, 3];
-        let indices = glium::IndexBuffer::new(
-            &disp,
-            glium::index::PrimitiveType::TrianglesList,
-            &ib_data
-        ).unwrap();
+        let indices =
+            glium::IndexBuffer::new(&disp, glium::index::PrimitiveType::TrianglesList, &ib_data)
+                .unwrap();
 
         let shader = match cell {
             Cell::Player1(_) => fragment_shader_src_red,
@@ -143,26 +156,44 @@ impl<'a> Game<'a> {
 
         let program = glium::Program::from_source(&disp, vertex_shader_src, shader, None).unwrap();
 
-        target.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms,
-                    &Default::default()).unwrap();
+        target
+            .draw(
+                &vertex_buffer,
+                &indices,
+                &program,
+                &glium::uniforms::EmptyUniforms,
+                &Default::default(),
+            )
+            .unwrap();
     }
 
     pub fn main_loop(&mut self) {
         let player1_start = Point { x: 4, y: 4 };
         let player2_start = Point { x: 94, y: 94 };
 
-        let plat = match Plateau::new(self.board_width, self.board_height, &player1_start, &player2_start) {
+        let plat = match Plateau::new(
+            self.board_width,
+            self.board_height,
+            &player1_start,
+            &player2_start,
+        ) {
             Ok(plat) => plat,
             Err(msg) => panic!(msg),
         };
 
         let p_bag = PieceBag::new([5, 7], [5, 7]);
 
-        let mut steve = match Engine::new(plat, p_bag, String::from("../resources/players/gsteyn.filler"), Some(String::from("../resources/players/gsteyn.filler")), 2) {
+        let mut steve = match Engine::new(
+            plat,
+            p_bag,
+            String::from("../resources/players/gsteyn.filler"),
+            Some(String::from("../resources/players/gsteyn.filler")),
+            2,
+        ) {
             Err(e) => panic!(e),
             Ok(engin) => engin,
         };
-        
+
         let ERROR_THRESHOLD = 3;
 
         let mut errors: u8 = 0;
@@ -174,7 +205,6 @@ impl<'a> Game<'a> {
 
         let mut closed = false;
         while !closed {
-
             let mut target = self.display.draw();
 
             match steve.next_move() {
@@ -189,9 +219,6 @@ impl<'a> Game<'a> {
                     errors += 1;
                 }
             }
-
-            let plat: &Plateau = steve.get_plateau();
-            // self.draw_plateau(plat, &mut target);
 
             match errors {
                 e if e >= ERROR_THRESHOLD => break,
@@ -222,7 +249,7 @@ impl<'a> Game<'a> {
                         } => {
                             closed = true;
                             **screen = Screen::Home;
-                        },
+                        }
                         glium::glutin::WindowEvent::Resized(size) => {
                             *width = size.width as f32;
                             *height = size.height as f32;
@@ -230,7 +257,7 @@ impl<'a> Game<'a> {
                             *rect_height = *height / *board_height as f32;
                             target.clear_color(0.0, 0.0, 1.0, 1.0);
                             reset = true;
-                        },
+                        }
                         _ => (),
                     },
                     _ => (),
@@ -238,7 +265,7 @@ impl<'a> Game<'a> {
             });
 
             if reset {
-                self.draw_plateau(plat, &mut target);
+                self.draw_plateau(steve.get_plateau(), &mut target);
             }
 
             target.finish().unwrap();
