@@ -62,8 +62,8 @@ pub fn main_loop() {
         x: (board_width - 4) as i32,
         y: (board_height - 4) as i32,
     };
-    let mut p1_path = Some(String::from("../resources/players/gsteyn.filler"));
-    let mut p2_path = Some(String::from("../resources/players/gsteyn.filler"));
+    let mut p1_path = Some(String::from("../../gsteyn.filler"));
+    let mut p2_path = Some(String::from("../../gsteyn.filler"));
 
     // Poll events from the window.
     let mut event_loop = EventLoop::new();
@@ -115,6 +115,8 @@ pub fn main_loop() {
                         &mut window_height,
                         board_width,
                         board_width,
+                        &p1_path,
+                        &p2_path,
                         p1_start,
                         p2_start,
                     );

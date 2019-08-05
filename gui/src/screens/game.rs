@@ -70,6 +70,8 @@ impl<'a> Game<'a> {
         window_height: &'a mut f32,
         board_width: u32,
         board_height: u32,
+        p1_path: &'a Option<String>,
+        p2_path: &'a Option<String>,
         p1_start: Point,
         p2_start: Point,
     ) -> Self {
@@ -80,11 +82,20 @@ impl<'a> Game<'a> {
 
         let p_bag = PieceBag::new([5, 7], [5, 7]);
 
+        let p1_path_clone = match p1_path {
+            Some(s) => Some(s.clone()),
+            None => None
+        };
+        let p2_path_clone = match p2_path {
+            Some(s) => Some(s.clone()),
+            None => None
+        };
+
         let mut engine = match Engine::new(
             plat,
             p_bag,
-            String::from("../resources/players/gsteyn.filler"),
-            Some(String::from("../resources/players/gsteyn.filler")),
+            p1_path_clone.unwrap(),
+            p2_path_clone,
             2,
         ) {
             Err(e) => panic!(e),
