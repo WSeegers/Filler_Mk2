@@ -1,7 +1,7 @@
 mod eventloop;
 
-pub mod renderer;
-pub use renderer::main_loop;
+pub mod controller;
+pub use controller::main_loop;
 
 pub enum Screen {
     Home,

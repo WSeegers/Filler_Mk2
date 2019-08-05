@@ -15,8 +15,8 @@ extern crate fillercore;
 mod core;
 mod screens;
 
-use crate::core::renderer;
+use crate::core::controller;
 
 fn main() {
-    renderer::main_loop();
+    controller::main_loop();
 }
