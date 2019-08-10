@@ -7,7 +7,7 @@ use constants::*;
 use std::fmt;
 
 #[derive(Debug, Copy, Clone)]
-enum Cell {
+pub enum Cell {
     Player1(bool),
     Player2(bool),
     Empty,
@@ -80,7 +80,7 @@ impl Plateau {
         p.x >= 0 && p.x < self.width as i32 && p.y >= 0 && p.y < self.height as i32
     }
 
-    fn get(&self, p: &Point) -> Cell {
+    pub fn get(&self, p: &Point) -> Cell {
         match self.cells.get((self.width as i32 * p.y + p.x) as usize) {
             Some(c) => c.clone(),
             None => panic!("Cells incorrectly initialized"),
