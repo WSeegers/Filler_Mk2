@@ -3,6 +3,8 @@ use super::point::Point;
 use rand::prelude::*;
 use std::fmt;
 
+use serde_json::json;
+
 const EMPTY: char = '.';
 const OCCUPIED: char = '*';
 
@@ -41,6 +43,24 @@ impl Piece {
             Some(c) => *c,
             None => panic!("Cells incorrectly initialized or out of bounds"),
         }
+    }
+
+    pub fn as_json(&self) -> String {
+        let mut v = Vec::new();
+        for val in self.cells.iter() {
+            match val {
+                true => v.push(1),
+                false => v.push(0)
+            };
+        }
+
+        let ret = json!({
+            "w": self.width,
+            "h": self.height,
+            "cells": v
+        });
+        let ret = String::from(ret.to_string());
+        ret
     }
 
     // This funciton should act only as a placeholder till better function is made
