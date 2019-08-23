@@ -5,7 +5,7 @@ use std::path;
 use fillercore::{engine, models};
 use models::{PieceBag, Plateau, Point};
 
-use engine::Engine;
+use engine::{Engine, Replay};
 
 /// Number of errors that may occure in a row before game ends
 const ERROR_THRESHOLD: u8 = 6;
@@ -76,6 +76,8 @@ fn main() {
         Ok(engin) => engin,
     };
 
+    let mut replay = Replay::new(&player1_start, &player2_start, 50, 50);
+
     let mut errors: u8 = 0;
     loop {
         match steve.next_move() {
@@ -83,6 +85,7 @@ fn main() {
                 print!("<got ({}): {}", response.player, response.raw_response);
                 print!("{}", response.piece);
                 print!("{}", steve.get_plateau());
+                replay.next_move(&response);
                 errors = 0;
                 ()
             }
