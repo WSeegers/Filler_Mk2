@@ -9,3 +9,6 @@ use player_com::PlayerCom;
 
 mod player_response;
 use player_response::PlayerResponse;
+
+pub mod replay;
+pub use replay::Replay;
