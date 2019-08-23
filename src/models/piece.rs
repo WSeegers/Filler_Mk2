@@ -45,7 +45,7 @@ impl Piece {
         }
     }
 
-    pub fn as_json(&self) -> String {
+    pub fn as_json(&self) -> serde_json::Value {
         let mut v = Vec::new();
         for val in self.cells.iter() {
             match val {
@@ -59,7 +59,7 @@ impl Piece {
             "h": self.height,
             "cells": v
         });
-        let ret = String::from(ret.to_string());
+
         ret
     }
 
