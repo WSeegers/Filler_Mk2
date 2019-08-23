@@ -1,7 +1,9 @@
 pub use std::convert::TryFrom;
 use std::ops::Add;
 
-#[derive(Debug, Clone, Copy)]
+use serde::{Serialize};
+
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct Point {
     pub x: i32,
     pub y: i32,
