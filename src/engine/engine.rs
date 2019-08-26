@@ -1,6 +1,8 @@
 use super::{PlayerCom, PlayerError, PlayerResponse};
 use crate::models::{PieceBag, Plateau, Player};
 
+use std::path::Path;
+
 /// Number of errors that may occure in a row before game ends
 const ERROR_THRESHOLD: u8 = 6;
 
@@ -12,7 +14,38 @@ pub struct Engine {
     player_count: u32,
 }
 
+pub struct EngineBuilder<'a> {
+    players: Vec<&'a Path>,
+    plateau: Option<Plateau>,
+    piece_bag: Option<PieceBag>,
+}
+
+impl<'a> EngineBuilder<'a> {
+    fn with_player(mut self, player_path: &'a Path) -> Self {
+        self.players.push(player_path);
+        self
+    }
+
+    fn with_plateau(mut self, plateau: Plateau) -> Self {
+        self.plateau = Some(plateau);
+        self
+    }
+
+    fn with_piecebag(mut self, piece_bag: PieceBag) -> Self {
+        self.piece_bag = Some(piece_bag);
+        self
+    }
+}
+
 impl Engine {
+    pub fn builder<'a>(player_path: &'a Path) -> EngineBuilder {
+        EngineBuilder {
+            players: vec![player_path],
+            plateau: None,
+            piece_bag: None,
+        }
+    }
+
     pub fn new(
         plateau: Plateau,
         piece_bag: PieceBag,
