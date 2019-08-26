@@ -1,6 +1,9 @@
 use super::{PlayerCom, PlayerError, PlayerResponse};
 use crate::models::{PieceBag, Plateau, Player};
 
+/// Number of errors that may occure in a row before game ends
+const ERROR_THRESHOLD: u8 = 6;
+
 pub struct Engine {
     players: Vec<PlayerCom>,
     plateau: Plateau,
@@ -32,6 +35,29 @@ impl Engine {
         })
     }
 
+    pub fn run(&mut self) {
+        let mut errors: u8 = 0;
+        loop {
+            match &self.next_move() {
+                Ok(response) => {
+                    print!("<got ({}): {}", response.player, response.raw_response);
+                    print!("{}", response.piece);
+                    print!("{}", self.plateau());
+                    errors = 0;
+                    ()
+                }
+                Err(e) => {
+                    println!("{}", e);
+                    errors += 1;
+                }
+            }
+            match errors {
+                e if e >= ERROR_THRESHOLD => break,
+                _ => (),
+            }
+        }
+    }
+
     pub fn next_move(&mut self) -> Result<PlayerResponse, PlayerError> {
         let player_com = &mut self.players[(self.move_count % self.player_count) as usize];
         self.move_count += 1;
@@ -40,7 +66,7 @@ impl Engine {
         player_com.request_placement(&mut self.plateau, &piece)
     }
 
-    pub fn get_plateau(&self) -> &Plateau {
+    pub fn plateau(&self) -> &Plateau {
         &self.plateau
     }
 

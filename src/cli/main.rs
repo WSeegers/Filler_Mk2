@@ -1,4 +1,5 @@
 extern crate clap;
+extern crate fillercore;
 
 use std::path;
 
@@ -6,9 +7,6 @@ use fillercore::{engine, models};
 use models::{PieceBag, Plateau, Point};
 
 use engine::Engine;
-
-/// Number of errors that may occure in a row before game ends
-const ERROR_THRESHOLD: u8 = 6;
 
 fn validate_player_path(path: String) -> Result<(), String> {
     let path = path::Path::new(&path);
@@ -76,26 +74,7 @@ fn main() {
         Ok(engin) => engin,
     };
 
-    let mut errors: u8 = 0;
-    loop {
-        match steve.next_move() {
-            Ok(response) => {
-                print!("<got ({}): {}", response.player, response.raw_response);
-                print!("{}", response.piece);
-                print!("{}", steve.get_plateau());
-                errors = 0;
-                ()
-            }
-            Err(e) => {
-                println!("{}", e);
-                errors += 1;
-            }
-        }
-        match errors {
-            e if e >= ERROR_THRESHOLD => break,
-            _ => (),
-        }
-    }
+    steve.run();
 
     let placements = steve.placement_counts();
     println!("Final Score: ");
