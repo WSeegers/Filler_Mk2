@@ -34,7 +34,7 @@ impl TryFrom<String> for Plateau {
         }
 
         let p = Plateau {
-            width: width as u32,
+            width,
             height,
             cells,
             last_piece: None,
