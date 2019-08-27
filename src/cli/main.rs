@@ -7,7 +7,7 @@ use fillercore::engine;
 
 use engine::Engine;
 
-fn validate_player_path(path: String) -> Result<(), String> {
+fn validate_path(path: String) -> Result<(), String> {
     let path = path::Path::new(&path);
 
     match path.exists() {
@@ -30,7 +30,7 @@ fn player_arg<'a>() -> clap::Arg<'a, 'a> {
         .value_name("PLAYER_PATH")
         .required(true)
         .max_values(2)
-        .validator(validate_player_path)
+        .validator(validate_path)
 }
 
 fn get_matches<'a>() -> clap::ArgMatches<'a> {

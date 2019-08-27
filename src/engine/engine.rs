@@ -1,4 +1,4 @@
-use super::{PlayerCom, PlayerError, PlayerResponse};
+use super::{PlayerCom, PlayerResponse};
 use crate::models::{PieceBag, Plateau, Player};
 
 /// Number of errors that may occure in a row before game ends
@@ -12,6 +12,7 @@ pub struct Engine {
     piece_bag: PieceBag,
     move_count: usize,
     player_count: usize,
+    history: Vec<PlayerResponse>,
 }
 
 pub struct EngineBuilder<'a> {
@@ -62,6 +63,7 @@ impl<'a> EngineBuilder<'a> {
             plateau,
             piece_bag,
             move_count: 0,
+            history: vec![],
         }
     }
 }
@@ -94,22 +96,29 @@ impl Engine {
             plateau,
             piece_bag,
             move_count: 0,
+            history: vec![],
         })
     }
 
     pub fn run(&mut self) {
         let mut errors: usize = 0;
         loop {
-            match &self.next_move() {
-                Ok(response) => {
-                    print!("<got ({}): {}", response.player, response.raw_response);
+            let response = self.next_move();
+
+            match &response.error {
+                None => {
+                    print!(
+                        "<got ({}): {}",
+                        &response.player,
+                        &response.raw_response.as_ref().unwrap()
+                    );
                     print!("{}", response.piece);
                     print!("{}", self.plateau());
                     errors = 0;
                     ()
                 }
-                Err(e) => {
-                    println!("{}", e);
+                Some(e) => {
+                    println!("{}: {}", response.player, e);
                     errors += 1;
                 }
             }
@@ -117,10 +126,11 @@ impl Engine {
                 e if e >= ERROR_THRESHOLD => break,
                 _ => (),
             }
+            self.history.push(response);
         }
     }
 
-    pub fn next_move(&mut self) -> Result<PlayerResponse, PlayerError> {
+    pub fn next_move(&mut self) -> PlayerResponse {
         let player_com = &mut self.players[self.move_count % self.player_count];
         self.move_count += 1;
 
