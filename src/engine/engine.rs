@@ -1,5 +1,8 @@
-use super::{PlayerCom, PlayerError, PlayerResponse};
+use super::{PlayerCom, PlayerResponse};
 use crate::models::{PieceBag, Plateau, Player};
+use serde_json::json;
+
+use std::path::Path;
 
 /// Number of errors that may occure in a row before game ends
 const ERROR_THRESHOLD: usize = 6;
@@ -7,11 +10,13 @@ const ERROR_THRESHOLD: usize = 6;
 const DEFAULT_TIMEOUT: usize = 2;
 
 pub struct Engine {
+    player_names: Vec<String>,
     players: Vec<PlayerCom>,
     plateau: Plateau,
     piece_bag: PieceBag,
     move_count: usize,
     player_count: usize,
+    history: Vec<PlayerResponse>,
 }
 
 pub struct EngineBuilder<'a> {
@@ -38,11 +43,10 @@ impl<'a> EngineBuilder<'a> {
 
     pub fn finish(&mut self) -> Engine {
         let mut players =
-            vec![PlayerCom::new(self.players[0], DEFAULT_TIMEOUT as u64, Player::Player1).unwrap()];
+            vec![PlayerCom::new(self.players[0], DEFAULT_TIMEOUT, Player::Player1).unwrap()];
 
         if let Some(player_path) = self.players.get(1) {
-            let player2 =
-                PlayerCom::new(*player_path, DEFAULT_TIMEOUT as u64, Player::Player2).unwrap();
+            let player2 = PlayerCom::new(*player_path, DEFAULT_TIMEOUT, Player::Player2).unwrap();
             players.push(player2);
         }
 
@@ -56,12 +60,27 @@ impl<'a> EngineBuilder<'a> {
             None => PieceBag::default(),
         };
 
+        let player_names = self
+            .players
+            .iter()
+            .map(|player_path| {
+                Path::new(*player_path)
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_owned()
+                    .to_string()
+            })
+            .collect();
+
         Engine {
+            player_names,
             player_count: players.len(),
             players,
             plateau,
             piece_bag,
             move_count: 0,
+            history: vec![],
         }
     }
 }
@@ -75,41 +94,25 @@ impl Engine {
         }
     }
 
-    pub fn new(
-        plateau: Plateau,
-        piece_bag: PieceBag,
-        player1_path: &str,
-        player2_path: Option<&str>,
-        time_out: u64,
-    ) -> Result<Self, String> {
-        let mut players = vec![PlayerCom::new(player1_path, time_out, Player::Player1)?];
-        match player2_path {
-            None => (),
-            Some(path) => players.push(PlayerCom::new(path, time_out, Player::Player2)?),
-        };
-
-        Ok(Engine {
-            player_count: players.len(),
-            players,
-            plateau,
-            piece_bag,
-            move_count: 0,
-        })
-    }
-
     pub fn run(&mut self) {
         let mut errors: usize = 0;
         loop {
-            match &self.next_move() {
-                Ok(response) => {
-                    print!("<got ({}): {}", response.player, response.raw_response);
+            let response = self.next_move();
+
+            match &response.error {
+                None => {
+                    print!(
+                        "<got ({}): {}",
+                        &response.player,
+                        &response.raw_response.as_ref().unwrap()
+                    );
                     print!("{}", response.piece);
                     print!("{}", self.plateau());
                     errors = 0;
                     ()
                 }
-                Err(e) => {
-                    println!("{}", e);
+                Some(e) => {
+                    println!("{}: {}", response.player, e);
                     errors += 1;
                 }
             }
@@ -117,10 +120,11 @@ impl Engine {
                 e if e >= ERROR_THRESHOLD => break,
                 _ => (),
             }
+            self.history.push(response);
         }
     }
 
-    pub fn next_move(&mut self) -> Result<PlayerResponse, PlayerError> {
+    pub fn next_move(&mut self) -> PlayerResponse {
         let player_com = &mut self.players[self.move_count % self.player_count];
         self.move_count += 1;
 
@@ -132,10 +136,29 @@ impl Engine {
         &self.plateau
     }
 
-    pub fn placement_counts(&self) -> Vec<(Player, u32)> {
+    pub fn placement_counts(&self) -> Vec<(Player, usize)> {
         self.players
             .iter()
-            .map(|player_com| (player_com.player, player_com.placement_count()))
+            .map(|player_com| (player_com.player(), player_com.placement_count()))
             .collect()
+    }
+
+    pub fn player_names(&self) -> &Vec<String> {
+        &self.player_names
+    }
+
+    pub fn replay(&self) -> String {
+        // let history = serde_json::to_string_pretty(&self.history).unwrap();
+        json!({
+        "players": self.player_names,
+        "plateau": json!({
+            "width": self.plateau.width(),
+            "height": self.plateau.height(),
+            "player1_start": self.plateau.player_start(Player::Player1),
+            "player2_start": self.plateau.player_start(Player::Player2),
+        }),
+        "history": self.history
+        })
+        .to_string()
     }
 }

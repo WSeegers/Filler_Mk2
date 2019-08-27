@@ -1,6 +1,7 @@
 use super::point::Point;
 
 use rand::prelude::*;
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::fmt;
 
 const EMPTY: char = '.';
@@ -10,9 +11,9 @@ const RANGE_DEFAULT: [usize; 2] = [3, 8];
 
 #[derive(Debug, Clone)]
 pub struct Piece {
-    pub width: usize,
-    pub height: usize,
-    pub cells: Vec<bool>,
+    width: usize,
+    height: usize,
+    cells: Vec<bool>,
     density: usize,
 }
 
@@ -67,6 +68,14 @@ impl Piece {
         }
         self
     }
+
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    pub fn height(&self) -> usize {
+        self.height
+    }
 }
 
 impl fmt::Display for Piece {
@@ -84,6 +93,25 @@ impl fmt::Display for Piece {
             writeln!(f, "")?;
         }
         Ok(())
+    }
+}
+
+impl Serialize for Piece {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut s = serializer.serialize_struct("Person", 3)?;
+        s.serialize_field("width", &self.width)?;
+        s.serialize_field("height", &self.height)?;
+
+        let cells: Vec<u8> = self
+            .cells
+            .iter()
+            .map(|cell| match cell {
+                true => 1,
+                false => 0,
+            })
+            .collect();
+        s.serialize_field("cells", &cells)?;
+        s.end()
     }
 }
 

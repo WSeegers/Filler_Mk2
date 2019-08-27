@@ -1,4 +1,4 @@
-use super::{Cell, Plateau, EMPTY, PLAYER1, PLAYER2};
+use super::{Cell, Plateau, Point, EMPTY, PLAYER1, PLAYER2};
 use std::convert::TryFrom;
 
 impl TryFrom<String> for Plateau {
@@ -13,6 +13,9 @@ impl TryFrom<String> for Plateau {
             None => map.len(),
         };
 
+        let mut player1_start = None;
+        let mut player2_start = None;
+
         let mut height = 0;
         let mut cells = Vec::new();
         for (y, row) in map.lines().enumerate() {
@@ -23,8 +26,24 @@ impl TryFrom<String> for Plateau {
             for (x, c) in row.chars().enumerate() {
                 use Cell::*;
                 let cell = match c {
-                    PLAYER1 => Player1(false),
-                    PLAYER2 => Player2(false),
+                    PLAYER1 => {
+                        if player1_start.is_none() {
+                            player1_start = Some(Point {
+                                x: x as i32,
+                                y: y as i32,
+                            })
+                        }
+                        Player1(false)
+                    }
+                    PLAYER2 => {
+                        if player2_start.is_none() {
+                            player2_start = Some(Point {
+                                x: x as i32,
+                                y: y as i32,
+                            })
+                        }
+                        Player2(false)
+                    }
                     EMPTY => Empty,
                     _ => return Err(format!("Unknown cell '{}' found at [{}, {}]", c, x, y)),
                 };
@@ -33,7 +52,16 @@ impl TryFrom<String> for Plateau {
             height += 1;
         }
 
+        if let None = player1_start {
+            return Err(String::from("Player1 not found"));
+        }
+        if let None = player2_start {
+            return Err(String::from("Player2 not found"));
+        }
+
         let p = Plateau {
+            player1_start: player1_start.unwrap(),
+            player2_start: player2_start.unwrap(),
             width,
             height,
             cells,

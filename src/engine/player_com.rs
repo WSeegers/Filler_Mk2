@@ -6,21 +6,21 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 
-use super::{PlayerError, PlayerResponse};
+use super::PlayerResponse;
 use crate::models::{Piece, Plateau, Player, Point};
 
 pub type ComError = String;
 
 pub struct PlayerCom {
-    pub player: Player,
-    placement_count: u32,
+    player: Player,
+    placement_count: usize,
     sender: Sender<std::string::String>,
     receiver: Receiver<std::string::String>,
-    timeout: u64,
+    timeout: usize,
 }
 
 impl PlayerCom {
-    pub fn new(path: &str, timeout: u64, player: Player) -> Result<PlayerCom, ComError> {
+    pub fn new(path: &str, timeout: usize, player: Player) -> Result<PlayerCom, ComError> {
         let (sender, receiver) = PlayerCom::spawn_player(path, player)?;
         Ok(PlayerCom {
             player,
@@ -31,52 +31,60 @@ impl PlayerCom {
         })
     }
 
-    pub fn request_placement(
-        &mut self,
-        plateau: &mut Plateau,
-        piece: &Piece,
-    ) -> Result<PlayerResponse, PlayerError> {
-        let msg = format!("{}{}", plateau, piece);
-        self.send(msg)?;
-        let received = self.receive()?;
-
-        let placement = match Point::try_from(&received) {
-            Ok(point) => point,
-            Err(msg) => return Err(PlayerError::new(self.player, msg)),
-        };
-
-        match plateau.place_piece(piece, &placement, self.player) {
-            Ok(_) => (),
-            Err(msg) => return Err(PlayerError::new(self.player, msg)),
-        };
-
-        self.placement_count += 1;
-
-        Ok(PlayerResponse {
+    pub fn request_placement(&mut self, plateau: &mut Plateau, piece: &Piece) -> PlayerResponse {
+        let mut player_response = PlayerResponse {
             player: self.player,
             piece: piece.clone(),
-            raw_response: String::from(received),
+            raw_response: None,
             placement_count: self.placement_count,
-        })
+            error: None,
+        };
+
+        let msg = format!("{}{}", plateau, piece);
+        if let Err(error_message) = self.send(msg) {
+            player_response.error = Some(error_message);
+            return player_response;
+        }
+
+        let raw_response = self.receive();
+        if let Err(error_message) = raw_response {
+            player_response.error = Some(error_message);
+            return player_response;
+        }
+        let raw_response = raw_response.unwrap();
+
+        let placement = Point::try_from(&raw_response);
+        player_response.raw_response = Some(raw_response);
+        if let Err(error_message) = placement {
+            player_response.error = Some(error_message);
+            return player_response;
+        }
+
+        if let Err(error_message) = plateau.place_piece(piece, &placement.unwrap(), self.player) {
+            player_response.error = Some(error_message);
+            return player_response;
+        }
+
+        self.placement_count += 1;
+        player_response.placement_count = self.placement_count;
+
+        player_response
     }
 
-    fn send(&self, message: String) -> Result<(), PlayerError> {
+    fn send(&self, message: String) -> Result<(), String> {
         match self.sender.send(message) {
             Ok(_) => Ok(()),
-            Err(_) => Err(PlayerError::new(
-                Player::Player1,
-                String::from("Error while sending message"),
-            )),
+            Err(_) => Err(String::from("Error while sending message")),
         }
     }
 
-    fn receive(&self) -> Result<String, PlayerError> {
+    fn receive(&self) -> Result<String, String> {
         let s = self
             .receiver
-            .recv_timeout(Duration::from_secs(self.timeout));
+            .recv_timeout(Duration::from_secs(self.timeout as u64));
         match s {
             Ok(s) => Ok(s),
-            Err(_) => Err(PlayerError::new(Player::Player1, String::from("Timed out"))),
+            Err(_) => Err(String::from("Timed out")),
         }
     }
 
@@ -134,7 +142,11 @@ impl PlayerCom {
         Ok((sender, receiver))
     }
 
-    pub fn placement_count(&self) -> u32 {
+    pub fn placement_count(&self) -> usize {
         self.placement_count
+    }
+
+    pub fn player(&self) -> Player {
+        self.player
     }
 }
