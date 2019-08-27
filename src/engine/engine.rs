@@ -17,30 +17,30 @@ pub struct Engine {
 }
 
 pub struct EngineBuilder<'a> {
-    players: Vec<&'a Path>,
+    players: Vec<&'a str>,
     plateau: Option<Plateau>,
     piece_bag: Option<PieceBag>,
 }
 
 impl<'a> EngineBuilder<'a> {
-    fn with_player2(&mut self, player_path: &'a Path) -> &Self {
+    pub fn with_player2(&mut self, player_path: &'a str) -> &Self {
         self.players.push(player_path);
         self
     }
 
-    fn with_plateau(&mut self, plateau: Plateau) -> &Self {
+    pub fn with_plateau(&mut self, plateau: Plateau) -> &Self {
         self.plateau = Some(plateau);
         self
     }
 
-    fn with_piecebag(&mut self, piece_bag: PieceBag) -> &Self {
+    pub fn with_piecebag(&mut self, piece_bag: PieceBag) -> &Self {
         self.piece_bag = Some(piece_bag);
         self
     }
 
-    fn finish(&mut self) -> Engine {
-        let players = vec![PlayerCom::new(
-            String::from(self.players[0].to_str().unwrap()),
+    pub fn finish(&mut self) -> Engine {
+        let mut players = vec![PlayerCom::new(
+            String::from(self.players[0]),
             DEFAULT_TIMEOUT as u64,
             Player::Player1,
         )
@@ -48,20 +48,21 @@ impl<'a> EngineBuilder<'a> {
 
         if let Some(player_path) = self.players.get(1) {
             let player2 = PlayerCom::new(
-                String::from(player_path.to_str().unwrap()),
+                String::from(*player_path),
                 DEFAULT_TIMEOUT as u64,
                 Player::Player2,
             )
             .unwrap();
+            players.push(player2);
         }
 
-        let plateau = match self.plateau {
-            Some(plat) => plat,
+        let plateau = match self.plateau.take() {
+            Some(set_plateau) => set_plateau,
             None => Plateau::default(),
         };
 
-        let piece_bag = match self.plateau {
-            Some(plat) => plat,
+        let piece_bag = match self.piece_bag.take() {
+            Some(set_piece_bag) => set_piece_bag,
             None => PieceBag::default(),
         };
 
@@ -76,7 +77,7 @@ impl<'a> EngineBuilder<'a> {
 }
 
 impl Engine {
-    pub fn builder<'a>(player_path: &'a Path) -> EngineBuilder {
+    pub fn builder<'a>(player_path: &'a str) -> EngineBuilder {
         EngineBuilder {
             players: vec![player_path],
             plateau: None,

@@ -4,7 +4,6 @@ extern crate fillercore;
 use std::path;
 
 use fillercore::{engine, models};
-use models::{PieceBag, Plateau, Point};
 
 use engine::Engine;
 
@@ -51,32 +50,16 @@ fn main() {
         .expect("Clap failed at handling of players")
         .collect();
 
-    // Section needs to handling input of map -----
-    let player1_start = Point { x: 4, y: 4 };
-    let player2_start = Point { x: 44, y: 44 };
+    let mut builder = Engine::builder(players[0]);
+    if let Some(player2_path) = players.get(1) {
+        builder.with_player2(*player2_path);
+    }
 
-    let plat = match Plateau::new(50, 50, &player1_start, &player2_start) {
-        Ok(plat) => plat,
-        Err(msg) => panic!(msg),
-    };
-    // --------------------------------------------
+    let mut filler = builder.finish();
 
-    let p_bag = PieceBag::new([5, 7], [5, 7]);
+    filler.run();
 
-    let player1 = String::from(players[0]);
-    let player2 = match players.get(1) {
-        Some(&player) => Some(String::from(player)),
-        None => None,
-    };
-
-    let mut steve = match Engine::new(plat, p_bag, player1, player2, 2) {
-        Err(e) => panic!(e),
-        Ok(engin) => engin,
-    };
-
-    steve.run();
-
-    let placements = steve.placement_counts();
+    let placements = filler.placement_counts();
     println!("Final Score: ");
     for (player, count) in placements {
         println!("<{}> -> {}", player, count);
