@@ -43,11 +43,10 @@ impl<'a> EngineBuilder<'a> {
 
     pub fn finish(&mut self) -> Engine {
         let mut players =
-            vec![PlayerCom::new(self.players[0], DEFAULT_TIMEOUT as u64, Player::Player1).unwrap()];
+            vec![PlayerCom::new(self.players[0], DEFAULT_TIMEOUT, Player::Player1).unwrap()];
 
         if let Some(player_path) = self.players.get(1) {
-            let player2 =
-                PlayerCom::new(*player_path, DEFAULT_TIMEOUT as u64, Player::Player2).unwrap();
+            let player2 = PlayerCom::new(*player_path, DEFAULT_TIMEOUT, Player::Player2).unwrap();
             players.push(player2);
         }
 
@@ -137,11 +136,15 @@ impl Engine {
         &self.plateau
     }
 
-    pub fn placement_counts(&self) -> Vec<(Player, u32)> {
+    pub fn placement_counts(&self) -> Vec<(Player, usize)> {
         self.players
             .iter()
             .map(|player_com| (player_com.player(), player_com.placement_count()))
             .collect()
+    }
+
+    pub fn player_names(&self) -> &Vec<String> {
+        &self.player_names
     }
 
     pub fn replay(&self) -> String {

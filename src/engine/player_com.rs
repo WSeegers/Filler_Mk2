@@ -13,14 +13,14 @@ pub type ComError = String;
 
 pub struct PlayerCom {
     player: Player,
-    placement_count: u32,
+    placement_count: usize,
     sender: Sender<std::string::String>,
     receiver: Receiver<std::string::String>,
-    timeout: u64,
+    timeout: usize,
 }
 
 impl PlayerCom {
-    pub fn new(path: &str, timeout: u64, player: Player) -> Result<PlayerCom, ComError> {
+    pub fn new(path: &str, timeout: usize, player: Player) -> Result<PlayerCom, ComError> {
         let (sender, receiver) = PlayerCom::spawn_player(path, player)?;
         Ok(PlayerCom {
             player,
@@ -81,7 +81,7 @@ impl PlayerCom {
     fn receive(&self) -> Result<String, String> {
         let s = self
             .receiver
-            .recv_timeout(Duration::from_secs(self.timeout));
+            .recv_timeout(Duration::from_secs(self.timeout as u64));
         match s {
             Ok(s) => Ok(s),
             Err(_) => Err(String::from("Timed out")),
@@ -142,7 +142,7 @@ impl PlayerCom {
         Ok((sender, receiver))
     }
 
-    pub fn placement_count(&self) -> u32 {
+    pub fn placement_count(&self) -> usize {
         self.placement_count
     }
 
