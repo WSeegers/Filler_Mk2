@@ -1,5 +1,8 @@
 use super::{PlayerCom, PlayerResponse};
 use crate::models::{PieceBag, Plateau, Player};
+use serde_json::json;
+
+use std::path::Path;
 
 /// Number of errors that may occure in a row before game ends
 const ERROR_THRESHOLD: usize = 6;
@@ -7,6 +10,7 @@ const ERROR_THRESHOLD: usize = 6;
 const DEFAULT_TIMEOUT: usize = 2;
 
 pub struct Engine {
+    player_names: Vec<String>,
     players: Vec<PlayerCom>,
     plateau: Plateau,
     piece_bag: PieceBag,
@@ -57,7 +61,21 @@ impl<'a> EngineBuilder<'a> {
             None => PieceBag::default(),
         };
 
+        let player_names = self
+            .players
+            .iter()
+            .map(|player_path| {
+                Path::new(*player_path)
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_owned()
+                    .to_string()
+            })
+            .collect();
+
         Engine {
+            player_names,
             player_count: players.len(),
             players,
             plateau,
@@ -75,29 +93,6 @@ impl Engine {
             plateau: None,
             piece_bag: None,
         }
-    }
-
-    pub fn new(
-        plateau: Plateau,
-        piece_bag: PieceBag,
-        player1_path: &str,
-        player2_path: Option<&str>,
-        time_out: u64,
-    ) -> Result<Self, String> {
-        let mut players = vec![PlayerCom::new(player1_path, time_out, Player::Player1)?];
-        match player2_path {
-            None => (),
-            Some(path) => players.push(PlayerCom::new(path, time_out, Player::Player2)?),
-        };
-
-        Ok(Engine {
-            player_count: players.len(),
-            players,
-            plateau,
-            piece_bag,
-            move_count: 0,
-            history: vec![],
-        })
     }
 
     pub fn run(&mut self) {
@@ -145,7 +140,22 @@ impl Engine {
     pub fn placement_counts(&self) -> Vec<(Player, u32)> {
         self.players
             .iter()
-            .map(|player_com| (player_com.player, player_com.placement_count()))
+            .map(|player_com| (player_com.player(), player_com.placement_count()))
             .collect()
+    }
+
+    pub fn replay(&self) -> String {
+        // let history = serde_json::to_string_pretty(&self.history).unwrap();
+        json!({
+        "players": self.player_names,
+        "plateau": json!({
+            "width": self.plateau.width(),
+            "height": self.plateau.height(),
+            "player1_start": self.plateau.player_start(Player::Player1),
+            "player2_start": self.plateau.player_start(Player::Player2),
+        }),
+        "history": self.history
+        })
+        .to_string()
     }
 }

@@ -1,7 +1,8 @@
 use super::constants::*;
+use serde::Serialize;
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize)]
 pub enum Player {
     Player1,
     Player2,

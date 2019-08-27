@@ -65,4 +65,6 @@ fn main() {
     for (player, count) in placements {
         println!("<{}> -> {}", player, count);
     }
+
+    print!("{}", filler.replay());
 }

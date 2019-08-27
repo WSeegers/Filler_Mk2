@@ -47,6 +47,8 @@ impl Cell {
 
 #[derive(Debug)]
 pub struct Plateau {
+    player1_start: Point,
+    player2_start: Point,
     width: usize,
     height: usize,
     cells: Vec<Cell>,
@@ -55,17 +57,13 @@ pub struct Plateau {
 
 impl Plateau {
     pub fn default() -> Self {
-        let mut plateau = Plateau {
-            width: DEFAULT_SIZE,
-            height: DEFAULT_SIZE,
-            cells: vec![Cell::Empty; (DEFAULT_SIZE * DEFAULT_SIZE) as usize],
-            last_piece: None,
-        };
-
-        plateau.set(&DEFAULT_P1_START, Cell::Player1(false));
-        plateau.set(&DEFAULT_P2_START, Cell::Player2(false));
-
-        plateau
+        Plateau::new(
+            DEFAULT_SIZE,
+            DEFAULT_SIZE,
+            &DEFAULT_P1_START,
+            &DEFAULT_P2_START,
+        )
+        .unwrap()
     }
 
     pub fn new(
@@ -75,6 +73,8 @@ impl Plateau {
         player2: &Point,
     ) -> Result<Plateau, String> {
         let mut plateau = Plateau {
+            player1_start: player1.clone(),
+            player2_start: player2.clone(),
             width,
             height,
             cells: vec![Cell::Empty; (width * height) as usize],
@@ -117,8 +117,8 @@ impl Plateau {
     ) -> Result<(), String> {
         let mut overlap = false;
 
-        for y in 0..(piece.height) as i32 {
-            for x in 0..(piece.width) as i32 {
+        for y in 0..(piece.height()) as i32 {
+            for x in 0..(piece.width()) as i32 {
                 use Cell::{Empty, Player1, Player2};
                 if !piece.get(Point { x, y }) {
                     continue;
@@ -162,8 +162,8 @@ impl Plateau {
 
         self.is_valid_placement(piece, placement, &owner)?;
 
-        for y in 0..(piece.height) as i32 {
-            for x in 0..(piece.width) as i32 {
+        for y in 0..(piece.height()) as i32 {
+            for x in 0..(piece.width()) as i32 {
                 if !piece.get(Point { x, y }) {
                     continue;
                 }
@@ -179,8 +179,8 @@ impl Plateau {
 
     fn age_placement(&mut self) {
         if let Some((placement, piece)) = self.last_piece.take() {
-            for y in 0..(piece.height) as i32 {
-                for x in 0..(piece.width) as i32 {
+            for y in 0..(piece.height()) as i32 {
+                for x in 0..(piece.width()) as i32 {
                     if !piece.get(Point { x, y }) {
                         continue;
                     }
@@ -189,6 +189,21 @@ impl Plateau {
                     self.set(&offset, owner.age());
                 }
             }
+        }
+    }
+
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    pub fn player_start(&self, player: Player) -> Point {
+        match player {
+            Player::Player1 => self.player1_start,
+            Player::Player2 => self.player2_start,
         }
     }
 }
@@ -320,5 +335,10 @@ mod tests {
             plateau.is_valid_placement(&piece, &placement, &Cell::Player2(false)),
             Ok(())
         );
+    }
+
+    #[test]
+    fn default_should_not_panic() {
+        Plateau::default();
     }
 }

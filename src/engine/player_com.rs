@@ -12,7 +12,7 @@ use crate::models::{Piece, Plateau, Player, Point};
 pub type ComError = String;
 
 pub struct PlayerCom {
-    pub player: Player,
+    player: Player,
     placement_count: u32,
     sender: Sender<std::string::String>,
     receiver: Receiver<std::string::String>,
@@ -144,5 +144,9 @@ impl PlayerCom {
 
     pub fn placement_count(&self) -> u32 {
         self.placement_count
+    }
+
+    pub fn player(&self) -> Player {
+        self.player
     }
 }
