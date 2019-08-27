@@ -6,6 +6,10 @@ use constants::*;
 
 use std::fmt;
 
+const DEFAULT_SIZE: usize = 50;
+const DEFAULT_P1_START: Point = Point { x: 5, y: 5 };
+const DEFAULT_P2_START: Point = Point { x: 44, y: 44 };
+
 #[derive(Debug, Copy, Clone)]
 enum Cell {
     Player1(bool),
@@ -43,16 +47,30 @@ impl Cell {
 
 #[derive(Debug)]
 pub struct Plateau {
-    pub width: u32,
-    pub height: u32,
+    width: usize,
+    height: usize,
     cells: Vec<Cell>,
     last_piece: Option<(Point, Piece)>,
 }
 
 impl Plateau {
+    pub fn default() -> Self {
+        let mut plateau = Plateau {
+            width: DEFAULT_SIZE,
+            height: DEFAULT_SIZE,
+            cells: vec![Cell::Empty; (DEFAULT_SIZE * DEFAULT_SIZE) as usize],
+            last_piece: None,
+        };
+
+        plateau.set(&DEFAULT_P1_START, Cell::Player1(false));
+        plateau.set(&DEFAULT_P2_START, Cell::Player2(false));
+
+        plateau
+    }
+
     pub fn new(
-        width: u32,
-        height: u32,
+        width: usize,
+        height: usize,
         player1: &Point,
         player2: &Point,
     ) -> Result<Plateau, String> {

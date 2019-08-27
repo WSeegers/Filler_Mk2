@@ -6,34 +6,31 @@ use std::fmt;
 const EMPTY: char = '.';
 const OCCUPIED: char = '*';
 
+const RANGE_DEFAULT: [usize; 2] = [3, 8];
+
 #[derive(Debug, Clone)]
 pub struct Piece {
-    pub width: u32,
-    pub height: u32,
+    pub width: usize,
+    pub height: usize,
     pub cells: Vec<bool>,
-    density: u32,
-    x_range: [u32; 2],
-    y_range: [u32; 2],
+    density: usize,
 }
 
 impl Piece {
-    pub fn new(width: u32, height: u32, cells: Vec<bool>) -> Self {
-        assert_eq!(width * height, cells.len() as u32);
+    pub fn new(width: usize, height: usize, cells: Vec<bool>) -> Self {
+        assert_eq!(width * height, cells.len());
 
-        let mut p = Piece {
+        let p = Piece {
             width,
             height,
             cells,
             density: 1,
-            x_range: [width, 0],
-            y_range: [height, 0],
         };
-        p.set_range();
         p
     }
 
-    pub fn new_blank(width: u32, height: u32) -> Self {
-        Piece::new(width, height, vec![false; (width * height) as usize])
+    pub fn new_blank(width: usize, height: usize) -> Self {
+        Piece::new(width, height, vec![false; width * height])
     }
 
     pub fn get(&self, p: Point) -> bool {
@@ -43,8 +40,8 @@ impl Piece {
         }
     }
 
-    // This funciton should act only as a placeholder till better function is made
-    fn mutate_1(&mut self, x: u32, y: u32) -> &mut Self {
+    // This fn should act only as a placeholder till better function is made
+    fn mutate(&mut self, x: usize, y: usize) -> &mut Self {
         let mut rng = thread_rng();
 
         if x == 0 || y == 0 || x >= self.width - 1 || y >= self.height - 1 {
@@ -59,29 +56,14 @@ impl Piece {
             }
             let dx = rng.gen_range(-1, 2);
             let dy = rng.gen_range(-1, 2);
-            let x = (x as i32 + dx) as u32;
-            let y = (y as i32 + dy) as u32;
+            let x = (x as i32 + dx) as usize;
+            let y = (y as i32 + dy) as usize;
             if self.cells[(y * self.width + x) as usize] == true {
                 continue;
             }
             self.cells[(y * self.width + x) as usize] = true;
             self.density += 1;
-            self.mutate_1(x, y);
-        }
-        self
-    }
-
-    fn set_range(&mut self) -> &mut Self {
-        for y in 0..self.height {
-            for x in 0..self.width {
-                match self.cells[(y * self.width + x) as usize] {
-                    true => {
-                        self.x_range = [self.x_range[0].min(x), self.x_range[1].max(x)];
-                        self.y_range = [self.y_range[0].min(y), self.y_range[1].max(y)];
-                    }
-                    false => (),
-                }
-            }
+            self.mutate(x, y);
         }
         self
     }
@@ -106,12 +88,19 @@ impl fmt::Display for Piece {
 }
 
 pub struct PieceBag {
-    width_range: [u32; 2],
-    height_range: [u32; 2],
+    width_range: [usize; 2],
+    height_range: [usize; 2],
 }
 
 impl PieceBag {
-    pub fn new(width_range: [u32; 2], height_range: [u32; 2]) -> PieceBag {
+    pub fn default() -> PieceBag {
+        PieceBag {
+            width_range: RANGE_DEFAULT,
+            height_range: RANGE_DEFAULT,
+        }
+    }
+
+    pub fn new(width_range: [usize; 2], height_range: [usize; 2]) -> PieceBag {
         let mut p = PieceBag {
             width_range,
             height_range,
@@ -132,7 +121,7 @@ impl PieceBag {
         let x = rng.gen_range(1, p.width - 1);
         let y = rng.gen_range(1, p.height - 1);
         p.cells[(y * p.width + x) as usize] = true;
-        p.mutate_1(x, y).set_range();
+        p.mutate(x, y);
 
         p
     }

@@ -20,9 +20,8 @@ pub struct PlayerCom {
 }
 
 impl PlayerCom {
-    pub fn new(path1: String, timeout: u64, player: Player) -> Result<PlayerCom, ComError> {
-        let (sender, receiver) = PlayerCom::spawn_player(path1, player)?;
-
+    pub fn new(path: &str, timeout: u64, player: Player) -> Result<PlayerCom, ComError> {
+        let (sender, receiver) = PlayerCom::spawn_player(path, player)?;
         Ok(PlayerCom {
             player,
             sender,
@@ -82,12 +81,13 @@ impl PlayerCom {
     }
 
     fn spawn_player(
-        path: String,
+        path: &str,
         player_num: Player,
     ) -> Result<(Sender<std::string::String>, Receiver<std::string::String>), ComError> {
         let (sender, receiver_internal) = mpsc::channel();
         let (sender_internal, receiver) = mpsc::channel();
 
+        let path = String::from(path);
         thread::spawn(move || {
             let mut child_process = Command::new(&path)
                 .stdin(Stdio::piped())
@@ -108,12 +108,10 @@ impl PlayerCom {
             );
 
             match player_num {
-                Player::Player1 => child_in
-                    .write(format!("$$$ exec p1 : {}\n", path).as_bytes())
-                    .unwrap_or_else(|_| panic!("Error initializing player 1")),
-                Player::Player2 => child_in
-                    .write(format!("$$$ exec p2 : {}\n", path).as_bytes())
-                    .unwrap_or_else(|_| panic!("Error initializing player 2")),
+                Player::Player1 => write!(child_in, "$$$ exec p1 : {}\n", path)
+                    .expect("Error initializing player 2"),
+                Player::Player2 => write!(child_in, "$$$ exec p2 : {}\n", path)
+                    .expect("Error initializing player 2"),
             };
 
             loop {

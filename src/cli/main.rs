@@ -1,14 +1,11 @@
 extern crate clap;
+extern crate fillercore;
 
 use std::path;
 
-use fillercore::{engine, models};
-use models::{PieceBag, Plateau, Point};
+use fillercore::engine;
 
 use engine::Engine;
-
-/// Number of errors that may occure in a row before game ends
-const ERROR_THRESHOLD: u8 = 6;
 
 fn validate_player_path(path: String) -> Result<(), String> {
     let path = path::Path::new(&path);
@@ -45,59 +42,25 @@ fn get_matches<'a>() -> clap::ArgMatches<'a> {
         .get_matches()
 }
 
+const CLAP_PLAYER_ERROR: &'static str = "Clap failed at handling of players";
+
 fn main() {
     let args = get_matches();
 
-    let players: Vec<&str> = args
-        .values_of("player")
-        .expect("Clap failed at handling of players")
-        .collect();
+    let mut players = args.values_of("player").expect(CLAP_PLAYER_ERROR);
 
-    // Section needs to handling input of map -----
-    let player1_start = Point { x: 4, y: 4 };
-    let player2_start = Point { x: 44, y: 44 };
+    let player1_path = players.next().expect(CLAP_PLAYER_ERROR);
 
-    let plat = match Plateau::new(50, 50, &player1_start, &player2_start) {
-        Ok(plat) => plat,
-        Err(msg) => panic!(msg),
-    };
-    // --------------------------------------------
-
-    let p_bag = PieceBag::new([5, 7], [5, 7]);
-
-    let player1 = String::from(players[0]);
-    let player2 = match players.get(1) {
-        Some(&player) => Some(String::from(player)),
-        None => None,
-    };
-
-    let mut steve = match Engine::new(plat, p_bag, player1, player2, 2) {
-        Err(e) => panic!(e),
-        Ok(engin) => engin,
-    };
-
-    let mut errors: u8 = 0;
-    loop {
-        match steve.next_move() {
-            Ok(response) => {
-                print!("<got ({}): {}", response.player, response.raw_response);
-                print!("{}", response.piece);
-                print!("{}", steve.get_plateau());
-                errors = 0;
-                ()
-            }
-            Err(e) => {
-                println!("{}", e);
-                errors += 1;
-            }
-        }
-        match errors {
-            e if e >= ERROR_THRESHOLD => break,
-            _ => (),
-        }
+    let mut builder = Engine::builder(player1_path);
+    if let Some(player2_path) = players.next() {
+        builder.with_player2(player2_path);
     }
 
-    let placements = steve.placement_counts();
+    let mut filler = builder.finish();
+
+    filler.run();
+
+    let placements = filler.placement_counts();
     println!("Final Score: ");
     for (player, count) in placements {
         println!("<{}> -> {}", player, count);
