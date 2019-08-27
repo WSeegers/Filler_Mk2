@@ -3,7 +3,7 @@ extern crate fillercore;
 
 use std::path;
 
-use fillercore::{engine, models};
+use fillercore::engine;
 
 use engine::Engine;
 

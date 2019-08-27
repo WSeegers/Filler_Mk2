@@ -1,8 +1,6 @@
 use super::{PlayerCom, PlayerError, PlayerResponse};
 use crate::models::{PieceBag, Plateau, Player};
 
-use std::path::Path;
-
 /// Number of errors that may occure in a row before game ends
 const ERROR_THRESHOLD: usize = 6;
 
@@ -39,20 +37,12 @@ impl<'a> EngineBuilder<'a> {
     }
 
     pub fn finish(&mut self) -> Engine {
-        let mut players = vec![PlayerCom::new(
-            String::from(self.players[0]),
-            DEFAULT_TIMEOUT as u64,
-            Player::Player1,
-        )
-        .unwrap()];
+        let mut players =
+            vec![PlayerCom::new(self.players[0], DEFAULT_TIMEOUT as u64, Player::Player1).unwrap()];
 
         if let Some(player_path) = self.players.get(1) {
-            let player2 = PlayerCom::new(
-                String::from(*player_path),
-                DEFAULT_TIMEOUT as u64,
-                Player::Player2,
-            )
-            .unwrap();
+            let player2 =
+                PlayerCom::new(*player_path, DEFAULT_TIMEOUT as u64, Player::Player2).unwrap();
             players.push(player2);
         }
 
@@ -88,8 +78,8 @@ impl Engine {
     pub fn new(
         plateau: Plateau,
         piece_bag: PieceBag,
-        player1_path: String,
-        player2_path: Option<String>,
+        player1_path: &str,
+        player2_path: Option<&str>,
         time_out: u64,
     ) -> Result<Self, String> {
         let mut players = vec![PlayerCom::new(player1_path, time_out, Player::Player1)?];

@@ -14,23 +14,18 @@ pub struct Piece {
     pub height: usize,
     pub cells: Vec<bool>,
     density: usize,
-    // x_range: [usize; 2],
-    // y_range: [usize; 2],
 }
 
 impl Piece {
     pub fn new(width: usize, height: usize, cells: Vec<bool>) -> Self {
         assert_eq!(width * height, cells.len());
 
-        let mut p = Piece {
+        let p = Piece {
             width,
             height,
             cells,
             density: 1,
-            // x_range: [width, 0],
-            // y_range: [height, 0],
         };
-        // p.set_range();
         p
     }
 
@@ -72,21 +67,6 @@ impl Piece {
         }
         self
     }
-
-    // fn set_range(&mut self) -> &mut Self {
-    //     for y in 0..self.height {
-    //         for x in 0..self.width {
-    //             match self.cells[(y * self.width + x) as usize] {
-    //                 true => {
-    //                     self.x_range = [self.x_range[0].min(x), self.x_range[1].max(x)];
-    //                     self.y_range = [self.y_range[0].min(y), self.y_range[1].max(y)];
-    //                 }
-    //                 false => (),
-    //             }
-    //         }
-    //     }
-    //     self
-    // }
 }
 
 impl fmt::Display for Piece {
@@ -141,7 +121,7 @@ impl PieceBag {
         let x = rng.gen_range(1, p.width - 1);
         let y = rng.gen_range(1, p.height - 1);
         p.cells[(y * p.width + x) as usize] = true;
-        p.mutate(x, y); //.set_range();
+        p.mutate(x, y);
 
         p
     }
