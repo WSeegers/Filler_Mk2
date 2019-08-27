@@ -42,17 +42,18 @@ fn get_matches<'a>() -> clap::ArgMatches<'a> {
         .get_matches()
 }
 
+const CLAP_PLAYER_ERROR: &'static str = "Clap failed at handling of players";
+
 fn main() {
     let args = get_matches();
 
-    let players: Vec<&str> = args
-        .values_of("player")
-        .expect("Clap failed at handling of players")
-        .collect();
+    let mut players = args.values_of("player").expect(CLAP_PLAYER_ERROR);
 
-    let mut builder = Engine::builder(players[0]);
-    if let Some(player2_path) = players.get(1) {
-        builder.with_player2(*player2_path);
+    let player1_path = players.next().expect(CLAP_PLAYER_ERROR);
+
+    let mut builder = Engine::builder(player1_path);
+    if let Some(player2_path) = players.next() {
+        builder.with_player2(player2_path);
     }
 
     let mut filler = builder.finish();
