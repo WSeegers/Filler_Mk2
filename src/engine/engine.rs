@@ -1,5 +1,5 @@
 use super::{PlayerCom, PlayerResponse};
-use crate::models::{PieceBag, Plateau, Player};
+use crate::models::{constants, PieceBag, Plateau, Player};
 use serde_json::json;
 
 use std::path::Path;
@@ -16,12 +16,14 @@ pub struct Engine {
     move_count: usize,
     player_count: usize,
     history: Vec<PlayerResponse>,
+    on_player_response: Box<dyn OnPlayerResponse>,
 }
 
 pub struct EngineBuilder<'a> {
     players: Vec<&'a str>,
     plateau: Option<Plateau>,
     piece_bag: Option<PieceBag>,
+    on_player_response: Option<Box<dyn OnPlayerResponse>>,
 }
 
 impl<'a> EngineBuilder<'a> {
@@ -37,6 +39,12 @@ impl<'a> EngineBuilder<'a> {
 
     pub fn with_piecebag(&mut self, piece_bag: PieceBag) -> &Self {
         self.piece_bag = Some(piece_bag);
+        self
+    }
+
+    pub fn verbose(&mut self) -> &Self {
+        self.on_player_response
+            .replace(Box::new(DefaultOnPlayerResponse {}));
         self
     }
 
@@ -72,6 +80,11 @@ impl<'a> EngineBuilder<'a> {
             })
             .collect();
 
+        let on_player_response = self
+            .on_player_response
+            .take()
+            .unwrap_or(Box::new(DefaultOnPlayerResponse {}));
+
         Engine {
             player_names,
             player_count: players.len(),
@@ -80,6 +93,7 @@ impl<'a> EngineBuilder<'a> {
             piece_bag,
             move_count: 0,
             history: vec![],
+            on_player_response,
         }
     }
 }
@@ -90,34 +104,25 @@ impl Engine {
             players: vec![player_path],
             plateau: None,
             piece_bag: None,
+            on_player_response: None,
         }
     }
 
     pub fn run(&mut self) {
         let mut errors: usize = 0;
+
+        for (i, player) in self.player_names.iter().enumerate() {
+            println!("Player {}: {}", constants::PLAYER_TOKENS[i], player)
+        }
+
         loop {
             let response = self.next_move();
+            &self.on_player_response.on_player_move(self, &response);
 
             match &response.error {
-                None => {
-                    print!(
-                        "<got ({}): {}",
-                        &response.player,
-                        &response.raw_response.as_ref().unwrap()
-                    );
-                    print!("{}", response.piece);
-                    print!("{}", self.plateau());
-                    errors = 0;
-                    ()
-                }
-                Some(e) => {
-                    println!("{}: {}", response.player, e);
-                    errors += 1;
-                }
-            }
-            match errors {
-                e if e >= ERROR_THRESHOLD => break,
-                _ => (),
+                None => errors = 0,
+                Some(_) if errors >= ERROR_THRESHOLD => break,
+                Some(_) => errors += 1,
             }
             self.history.push(response);
         }
@@ -158,5 +163,37 @@ impl Engine {
         "history": self.history
         })
         .to_string()
+    }
+}
+
+trait OnPlayerResponse {
+    fn on_player_move(&self, engine: &Engine, player_response: &PlayerResponse);
+}
+
+struct DefaultOnPlayerResponse;
+
+impl OnPlayerResponse for DefaultOnPlayerResponse {
+    fn on_player_move(&self, _: &Engine, _: &PlayerResponse) {}
+}
+
+struct PrintOnPlayerResponse;
+
+impl OnPlayerResponse for PrintOnPlayerResponse {
+    fn on_player_move(&self, engine: &Engine, player_response: &PlayerResponse) {
+        match &player_response.error {
+            None => {
+                print!(
+                    "<got ({}): {}",
+                    player_response.player,
+                    player_response.raw_response.as_ref().unwrap()
+                );
+                print!("{}", player_response.piece);
+                print!("{}", engine.plateau());
+                ()
+            }
+            Some(e) => {
+                println!("{}: {}", player_response.player, e);
+            }
+        }
     }
 }

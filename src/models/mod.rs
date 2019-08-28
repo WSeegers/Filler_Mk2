@@ -11,4 +11,4 @@ pub use player::Player;
 pub mod point;
 pub use point::Point;
 
-mod constants;
+pub mod constants;
