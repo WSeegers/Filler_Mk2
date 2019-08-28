@@ -6,7 +6,6 @@ use std::path::Path;
 
 /// Number of errors that may occure in a row before game ends
 const ERROR_THRESHOLD: usize = 6;
-
 const DEFAULT_TIMEOUT: usize = 2;
 
 pub struct Engine {
@@ -148,7 +147,6 @@ impl Engine {
     }
 
     pub fn replay(&self) -> String {
-        // let history = serde_json::to_string_pretty(&self.history).unwrap();
         json!({
         "players": self.player_names,
         "plateau": json!({
