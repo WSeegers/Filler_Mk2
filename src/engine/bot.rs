@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 use std::io::{BufRead, BufReader, Write};
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
@@ -11,7 +12,8 @@ use crate::models::{Piece, Plateau, Player, Point};
 
 pub type ComError = String;
 
-pub struct PlayerCom {
+pub struct Bot<'a> {
+    path: &'a str,
     player: Player,
     placement_count: usize,
     sender: Sender<std::string::String>,
@@ -19,16 +21,26 @@ pub struct PlayerCom {
     timeout: usize,
 }
 
-impl PlayerCom {
-    pub fn new(path: &str, timeout: usize, player: Player) -> Result<PlayerCom, ComError> {
-        let (sender, receiver) = PlayerCom::spawn_player(path, player)?;
-        Ok(PlayerCom {
+impl<'a> Bot<'a> {
+    pub fn new(path: &str, timeout: usize, player: Player) -> Result<Bot, ComError> {
+        let (sender, receiver) = Bot::spawn_player(path, player)?;
+        Ok(Bot {
+            path,
             player,
             sender,
             receiver,
             timeout,
             placement_count: 0,
         })
+    }
+
+    pub fn name(&self) -> String {
+        Path::new(self.path)
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .to_owned()
+            .to_string()
     }
 
     pub fn request_placement(&mut self, plateau: &mut Plateau, piece: &Piece) -> PlayerResponse {

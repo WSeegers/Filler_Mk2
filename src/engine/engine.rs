@@ -1,17 +1,14 @@
-use super::{PlayerCom, PlayerResponse};
-use crate::models::{constants, PieceBag, Plateau, Player};
+use super::{Bot, PlayerResponse};
+use crate::models::{PieceBag, Plateau, Player};
 use serde_json::json;
-
-use std::path::Path;
 
 /// Number of errors that may occure in a row before game ends
 const ERROR_THRESHOLD: usize = 6;
-/// Time is seconds that a player will be granted before timing out
+/// Time in seconds that a player will be granted before timing out
 const DEFAULT_TIMEOUT: usize = 2;
 
-pub struct Engine {
-    player_names: Vec<String>,
-    players: Vec<PlayerCom>,
+pub struct Engine<'a> {
+    players: Vec<Bot<'a>>,
     plateau: Plateau,
     piece_bag: PieceBag,
     move_count: usize,
@@ -51,10 +48,10 @@ impl<'a> EngineBuilder<'a> {
 
     pub fn finish(&mut self) -> Engine {
         let mut players =
-            vec![PlayerCom::new(self.players[0], DEFAULT_TIMEOUT, Player::Player1).unwrap()];
+            vec![Bot::new(self.players[0], DEFAULT_TIMEOUT, Player::Player1).unwrap()];
 
         if let Some(player_path) = self.players.get(1) {
-            let player2 = PlayerCom::new(*player_path, DEFAULT_TIMEOUT, Player::Player2).unwrap();
+            let player2 = Bot::new(*player_path, DEFAULT_TIMEOUT, Player::Player2).unwrap();
             players.push(player2);
         }
 
@@ -68,26 +65,12 @@ impl<'a> EngineBuilder<'a> {
             None => PieceBag::default(),
         };
 
-        let player_names = self
-            .players
-            .iter()
-            .map(|player_path| {
-                Path::new(*player_path)
-                    .file_name()
-                    .unwrap()
-                    .to_string_lossy()
-                    .to_owned()
-                    .to_string()
-            })
-            .collect();
-
         let on_player_response = self
             .on_player_response
             .take()
             .unwrap_or(Box::new(DefaultOnPlayerResponse {}));
 
         Engine {
-            player_names,
             player_count: players.len(),
             players,
             plateau,
@@ -99,8 +82,8 @@ impl<'a> EngineBuilder<'a> {
     }
 }
 
-impl Engine {
-    pub fn builder<'a>(player_path: &'a str) -> EngineBuilder {
+impl<'a> Engine<'a> {
+    pub fn builder<'b>(player_path: &'b str) -> EngineBuilder {
         EngineBuilder {
             players: vec![player_path],
             plateau: None,
@@ -112,8 +95,8 @@ impl Engine {
     pub fn run(&mut self) {
         let mut errors: usize = 0;
 
-        for (i, player) in self.player_names.iter().enumerate() {
-            println!("Player {}: {}", constants::PLAYER_TOKENS[i], player)
+        for bot in self.players.iter() {
+            println!("Player {}: {}", bot.player(), bot.name())
         }
 
         loop {
@@ -154,13 +137,13 @@ impl Engine {
             .collect()
     }
 
-    pub fn player_names(&self) -> &Vec<String> {
-        &self.player_names
+    pub fn player_names(&self) -> Vec<String> {
+        self.players.iter().map(|bot| bot.name()).collect()
     }
 
     pub fn replay(&self) -> String {
         json!({
-        "players": self.player_names,
+        "players": &self.player_names(),
         "plateau": json!({
             "width": self.plateau.width(),
             "height": self.plateau.height(),
