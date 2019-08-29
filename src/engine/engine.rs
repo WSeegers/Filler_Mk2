@@ -6,6 +6,7 @@ use std::path::Path;
 
 /// Number of errors that may occure in a row before game ends
 const ERROR_THRESHOLD: usize = 6;
+/// Time is seconds that a player will be granted before timing out
 const DEFAULT_TIMEOUT: usize = 2;
 
 pub struct Engine {
@@ -44,7 +45,7 @@ impl<'a> EngineBuilder<'a> {
 
     pub fn verbose(&mut self) -> &Self {
         self.on_player_response
-            .replace(Box::new(DefaultOnPlayerResponse {}));
+            .replace(Box::new(PrintOnPlayerResponse {}));
         self
     }
 

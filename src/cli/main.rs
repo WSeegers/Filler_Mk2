@@ -24,6 +24,10 @@ fn main() {
         builder.with_player2(player2_);
     }
 
+    if args.verbose() {
+        builder.verbose();
+    }
+
     let mut filler = builder.finish();
 
     filler.run();

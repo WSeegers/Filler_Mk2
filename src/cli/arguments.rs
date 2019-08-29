@@ -3,6 +3,8 @@ use std::path;
 
 const PLAYER_ARG: &'static str = "player";
 const JSON_ARG: &'static str = "json";
+const VERBOSE_ARG: &'static str = "verbose";
+
 const CLAP_PLAYER_ERROR: &'static str = "Clap failed at handling of players";
 
 pub struct Arguments<'a> {
@@ -12,11 +14,12 @@ pub struct Arguments<'a> {
 impl<'a> Arguments<'a> {
 	pub fn new() -> Self {
 		let matches = clap::App::new("Filler_mk2")
-			.version("0.1.0")
-			.author("Random Guys")
-			.about("About info")
+			.version("0.2.0")
+			.author("https://github.com/WSeegers, https://github.com/GJSteyn")
+			.about("A remake of 42's filler virtual machine")
 			.arg(player_arg())
 			.arg(json_arg())
+			.arg(verbose_arg())
 			.get_matches();
 
 		Arguments { matches }
@@ -34,6 +37,10 @@ impl<'a> Arguments<'a> {
 			true => Some(self.matches.value_of(JSON_ARG).unwrap_or("./")),
 			false => None,
 		}
+	}
+
+	pub fn verbose(&self) -> bool {
+		self.matches.is_present(VERBOSE_ARG)
 	}
 }
 
@@ -80,4 +87,11 @@ fn json_arg<'a>() -> clap::Arg<'a, 'a> {
 		.min_values(0)
 		.max_values(1)
 		.validator(validate_json_dir)
+		.help("folder where the a replay of the game will be saved in json")
+}
+
+fn verbose_arg<'a>() -> clap::Arg<'a, 'a> {
+	clap::Arg::with_name(VERBOSE_ARG)
+		.long(VERBOSE_ARG)
+		.help("displays each placement on the terminal")
 }
