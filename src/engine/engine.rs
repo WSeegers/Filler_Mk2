@@ -126,6 +126,12 @@ impl Engine {
             }
             self.history.push(response);
         }
+
+        let placements = self.placement_counts();
+        println!("Final Score: ");
+        for (player, count) in placements {
+            println!("<{}> -> {}", player, count);
+        }
     }
 
     pub fn next_move(&mut self) -> PlayerResponse {
