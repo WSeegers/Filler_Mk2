@@ -92,7 +92,7 @@ impl<'a> Engine<'a> {
         }
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self) -> Vec<PlayerResult> {
         let mut errors: usize = 0;
 
         for bot in self.players.iter() {
@@ -111,11 +111,12 @@ impl<'a> Engine<'a> {
             self.history.push(response);
         }
 
-        let placements = self.placement_counts();
+        let placements = self.results();
         println!("Final Score: ");
-        for (player, count) in placements {
-            println!("<{}> -> {}", player, count);
+        for game_result in placements.iter() {
+            println!("<{}> -> {}", game_result.player, game_result.placements);
         }
+        placements
     }
 
     pub fn next_move(&mut self) -> PlayerResponse {
@@ -130,10 +131,14 @@ impl<'a> Engine<'a> {
         &self.plateau
     }
 
-    pub fn placement_counts(&self) -> Vec<(Player, usize)> {
+    pub fn results(&self) -> Vec<PlayerResult> {
         self.players
             .iter()
-            .map(|player_com| (player_com.player(), player_com.placement_count()))
+            .map(|bot| PlayerResult {
+                player: bot.player(),
+                player_name: bot.name(),
+                placements: bot.placement_count(),
+            })
             .collect()
     }
 
@@ -186,4 +191,10 @@ impl OnPlayerResponse for PrintOnPlayerResponse {
             }
         }
     }
+}
+
+pub struct PlayerResult {
+    pub player: Player,
+    pub player_name: String,
+    pub placements: usize,
 }
