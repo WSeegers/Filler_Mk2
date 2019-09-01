@@ -1,6 +1,4 @@
 use clap;
-// use std::error::Error;
-// use std::fmt::{Display, Formatter, Result};
 use std::fs;
 use std::path::{self, PathBuf};
 

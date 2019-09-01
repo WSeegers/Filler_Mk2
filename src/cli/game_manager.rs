@@ -1,19 +1,28 @@
 use super::engine::Engine;
+use super::util;
 use std::fmt::{self, Display};
 
-pub struct GameManager {
+pub struct GameManager<'a> {
 	players: Vec<Player>,
+	json_dir: Option<&'a str>,
 }
 
-// Panics with less than 3 players
-impl GameManager {
+impl<'a> GameManager<'a> {
 	pub fn new(player_names: Vec<String>) -> Self {
 		let players = player_names
 			.iter()
 			.map(|player_name| Player::new(player_name.clone()))
 			.collect();
 
-		GameManager { players }
+		GameManager {
+			players,
+			json_dir: None,
+		}
+	}
+
+	pub fn with_replays(&mut self, json_dir: &'a str) -> &Self {
+		self.json_dir = Some(json_dir);
+		self
 	}
 
 	pub fn run(&mut self) {
@@ -29,6 +38,11 @@ impl GameManager {
 				}
 				let mut game = game_builder.finish();
 				let results = game.run();
+
+				// Check for replay dir
+				if let Some(json_dir) = self.json_dir {
+					util::write_replay(json_dir, &game);
+				}
 
 				// This was born out of frustration
 				// Data is badly organised to be honest
