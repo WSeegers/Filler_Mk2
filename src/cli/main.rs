@@ -2,7 +2,10 @@ extern crate chrono;
 extern crate clap;
 extern crate fillercore;
 
-use engine::Engine;
+mod arguments;
+use arguments::Arguments;
+
+use engine::{Engine, GameManager};
 use fillercore::engine;
 use std::path;
 
@@ -11,29 +14,29 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 
-mod arguments;
-use arguments::Arguments;
-
 fn main() {
     let args = Arguments::new();
 
     let players = args.player_paths();
 
-    let mut builder = Engine::builder(players[0].as_str());
-    // if let Some(player2_) = player2 {
-    //     builder.with_player2(player2_);
-    // }
+    if players.len() <= 2 {
+        let mut builder = Engine::builder(&players[0]);
+        if let Some(player2) = players.get(1) {
+            builder.with_player2(player2);
+        }
 
-    if args.verbose() {
-        builder.verbose();
-    }
+        if args.verbose() {
+            builder.verbose();
+        }
 
-    let mut filler = builder.finish();
+        let mut filler = builder.finish();
 
-    filler.run();
-
-    if let Some(json_dir) = args.json_path() {
-        write_replay(json_dir, &filler);
+        filler.run();
+        if let Some(json_dir) = args.json_path() {
+            write_replay(json_dir, &filler);
+        }
+    } else {
+        GameManager::new(players).run();
     }
 }
 

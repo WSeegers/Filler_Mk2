@@ -1,7 +1,7 @@
 use clap;
 // use std::error::Error;
 // use std::fmt::{Display, Formatter, Result};
-use std::fs::{self, DirEntry};
+use std::fs;
 use std::path::{self, PathBuf};
 
 const APP_NAME: &'static str = "Filler_mk2";
@@ -11,8 +11,6 @@ const PLAYER_ARG: &'static str = "player";
 const JSON_ARG: &'static str = "json";
 const VERBOSE_ARG: &'static str = "verbose";
 const PLAYER_DIR_ARG: &'static str = "players_dir";
-
-const CLAP_PLAYER_ERROR: &'static str = "Clap failed at handling of players";
 
 pub struct Arguments<'a> {
 	matches: clap::ArgMatches<'a>,
@@ -156,5 +154,5 @@ fn json_arg<'a>() -> clap::Arg<'a, 'a> {
 fn verbose_arg<'a>() -> clap::Arg<'a, 'a> {
 	clap::Arg::with_name(VERBOSE_ARG)
 		.long(VERBOSE_ARG)
-		.help("displays each placement on the terminal")
+		.help("displays each placement on the terminal, ignored with more than 2 players")
 }
