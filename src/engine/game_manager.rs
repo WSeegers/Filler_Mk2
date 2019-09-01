@@ -54,6 +54,18 @@ impl GameManager {
 			}
 		}
 
+		use std::cmp::Ordering;
+		self.players.sort_by(|a, b| {
+			let a = a.wins();
+			let b = b.wins();
+			if a == b {
+				Ordering::Equal
+			} else if a > b {
+				Ordering::Less
+			} else {
+				Ordering::Greater
+			}
+		});
 		for player in self.players.iter() {
 			println!("{}", player);
 		}
@@ -87,6 +99,10 @@ impl Player {
 			false => self.loses += 1,
 		}
 		self.total_placements += placements;
+	}
+
+	fn wins(&self) -> usize {
+		self.wins
 	}
 }
 
