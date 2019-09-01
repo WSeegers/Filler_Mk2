@@ -17,12 +17,12 @@ use arguments::Arguments;
 fn main() {
     let args = Arguments::new();
 
-    let (player1, player2) = args.player_paths();
+    let players = args.player_paths();
 
-    let mut builder = Engine::builder(player1);
-    if let Some(player2_) = player2 {
-        builder.with_player2(player2_);
-    }
+    let mut builder = Engine::builder(players[0].as_str());
+    // if let Some(player2_) = player2 {
+    //     builder.with_player2(player2_);
+    // }
 
     if args.verbose() {
         builder.verbose();
